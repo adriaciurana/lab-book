@@ -1,0 +1,90 @@
+{
+  "name": "lab-book",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A calm research workspace for papers, notes and experiments.",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "test:persistence": "env -u ELECTRON_RUN_AS_NODE electron tests/persistence.cjs",
+    "test:runtime": "node --test tests/runtime.cjs",
+    "test:reader": "env -u ELECTRON_RUN_AS_NODE electron tests/reader.cjs",
+    "test:routes": "env -u ELECTRON_RUN_AS_NODE electron tests/routes.cjs",
+    "test:library": "env -u ELECTRON_RUN_AS_NODE electron tests/library.cjs",
+    "test:appearance": "env -u ELECTRON_RUN_AS_NODE electron tests/appearance.cjs",
+    "test:workspace": "env -u ELECTRON_RUN_AS_NODE electron tests/workspace-pages.cjs",
+    "test:research-api": "node --test tests/research-api.cjs",
+    "test:research-hub": "env -u ELECTRON_RUN_AS_NODE electron tests/research-hub.cjs",
+    "test:demo": "node --test tests/demo-fixtures.cjs",
+    "test:demo-browser": "env -u ELECTRON_RUN_AS_NODE electron tests/demo-browser.cjs",
+    "test:experiment-picker": "env -u ELECTRON_RUN_AS_NODE electron tests/experiment-picker.cjs",
+    "test:sidebar-forms": "env -u ELECTRON_RUN_AS_NODE electron tests/sidebar-forms.cjs",
+    "test:columns": "node --test tests/table-schema.cjs",
+    "test:column-editor": "env -u ELECTRON_RUN_AS_NODE electron tests/column-editor.cjs",
+    "test:diagram-model": "node --test tests/diagram-service.cjs",
+    "test:diagram-editor": "env -u ELECTRON_RUN_AS_NODE electron tests/diagram-editor.cjs",
+    "test:column-tasks": "env -u ELECTRON_RUN_AS_NODE electron tests/column-tasks.cjs",
+    "test:research-polish": "env -u ELECTRON_RUN_AS_NODE electron tests/research-polish.cjs",
+    "test:search-controls": "env -u ELECTRON_RUN_AS_NODE electron tests/search-controls.cjs",
+    "test:board-workspace": "env -u ELECTRON_RUN_AS_NODE electron tests/board-workspace.cjs",
+    "test:inline-board": "env -u ELECTRON_RUN_AS_NODE electron tests/inline-board.cjs",
+    "start:test": "node server.cjs --test",
+    "start:production": "NODE_ENV=production PORT=4173 node server.cjs",
+    "dev": "node server.cjs",
+    "migrate:test": "node migrate-env.cjs",
+    "seed:test": "node seed-test.cjs",
+    "library:seed": "node seed-research.cjs",
+    "reading-paths:seed": "node scripts/seed-bilingual-reading-paths.cjs",
+    "reading-paths:seed:test": "node scripts/seed-bilingual-reading-paths.cjs --test",
+    "sota-review": "node scripts/sota-review.cjs",
+    "sota-review:test": "node scripts/sota-review.cjs --test",
+    "sota-install": "node scripts/install-sota-review.cjs",
+    "sota-uninstall": "node scripts/install-sota-review.cjs --uninstall",
+    "workspace:clean": "node clean-production.cjs",
+    "desktop": "env -u ELECTRON_RUN_AS_NODE electron .",
+    "desktop:dev": "concurrently \"node server.cjs\" \"wait-on http://localhost:4173 && env -u ELECTRON_RUN_AS_NODE electron .\"",
+    "package:desktop": "electron-builder"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.labbook.workspace",
+    "productName": "Lab Book",
+    "files": [
+      "index.html",
+      "favicon.svg",
+      "app.js",
+      "*.js",
+      "*.css",
+      "styles.css",
+      "electron/**/*",
+      "server.cjs",
+      "runtime.cjs",
+      "research-search.cjs",
+      "paper-service.cjs",
+      "research-api.cjs",
+      "diagram-service.cjs",
+      "agent-api.md",
+      "skills/**/*",
+      "node_modules/pdfjs-dist/build/*.mjs",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38"
+  }
+}

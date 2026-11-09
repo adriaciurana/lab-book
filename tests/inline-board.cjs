@@ -1,0 +1,15 @@
+const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-inline-board-')));
+app.whenReady().then(async()=>{const win=new BrowserWindow({show:false,width:1400,height:1000});try{await win.loadURL('http://localhost:4175/notes/inline-note?isolated=1');await win.webContents.executeJavaScript(`(async()=>{
+ const assert=(v,m)=>{if(!v)throw Error(m)};
+ state={folders:[{id:'inbox',name:'Inbox'}],notes:[{id:'inline-note',title:'Research',folder:'inbox',content:'<p>Keep this draft</p>',boardIds:['inline-board'],draft:true}],boards:[{id:'inline-board',name:'My research board',columns:['Todo','Training','Done'],noteId:'inline-note'}],tasks:[{id:'inline-task',board:'inline-board',col:'Todo',text:'Baseline',type:'task',noteId:'inline-note'}],papers:[],context:[]};ResearchModel.ensure(state);save();openEditor(state.notes[0]);
+ assert(document.querySelectorAll('#pageRelations [data-inline-column]').length===3,'Missing inline columns');
+ document.querySelector('#pageRelations [data-task="inline-task"]').click();document.querySelector('#hubTaskTitle').value='Updated baseline';document.querySelector('#hubSave').click();
+ assert(document.querySelector('#pageRelations').textContent.includes('Updated baseline'),'Inline task edit did not refresh');
+ const lane=[...document.querySelectorAll('#pageRelations [data-inline-column]')].find(el=>el.dataset.inlineColumn==='Training');
+ activeDragTask='inline-task';lane.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true}));
+ assert(state.tasks[0].col==='Training','Drag did not update source board');assert(document.querySelector('.editor'),'Drag left editor');
+ document.querySelector('#pageRelations [data-inline-column="Done"] [data-inline-add]').click();assert(document.querySelector('#hubTaskStatus').value==='Done','Wrong initial status');assert(document.querySelector('#hubTaskPage').value==='inline-note','Page not inherited');document.querySelector('#hubTaskTitle').value='Validate results';document.querySelector('#hubSave').click();assert(state.tasks.length===2,'New task not saved');
+ flushDraft();openEditor(state.notes[0]);assert(document.querySelector('#pageRelations').textContent.includes('Validate results'),'Task missing after reopen');assert(document.querySelector('.editor-body').textContent.includes('Keep this draft'),'Note draft lost');
+ insertResearchBlock('board','inline-board');assert(document.querySelector('.hub-embed [data-inline-board]'),'Embedded block missing live board');flushDraft();
+ })()`);win.webContents.reload();await new Promise(r=>win.webContents.once('did-finish-load',r));await win.webContents.executeJavaScript(`openEditor(state.notes.find(n=>n.id==='inline-note'));if(!document.querySelector('#pageRelations').textContent.includes('Validate results'))throw Error('Inline tasks lost on reload')`);console.log('PASS: inline board, edit, drag, contextual creation, note draft preservation, embed and reload');app.exit(0)}catch(error){console.error(error);app.exit(1)}});

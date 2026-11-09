@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    listen 8080;
+    server_name lab-book.local;
+    client_max_body_size 80m;
+    location / {
+        proxy_pass http://127.0.0.1:4173;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 240s;
+    }
+}

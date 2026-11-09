@@ -1,0 +1,29 @@
+.task{
+ position:relative;cursor:grab;user-select:none;
+ transition:box-shadow .16s ease,border-color .16s ease,transform .16s ease,background .16s ease;
+}
+.task *{cursor:inherit}
+.task::after{
+ content:'⠿';position:absolute;right:10px;top:10px;
+ color:var(--muted);font-size:18px;opacity:0;transition:opacity .16s ease;
+}
+.task:hover,.task:focus-visible{
+ border-color:#9db58e;box-shadow:0 5px 16px #17221e12;transform:translateY(-2px);
+}
+.task:hover::after,.task:focus-visible::after{opacity:1}
+.task:focus-visible{outline:2px solid #8aa36d;outline-offset:3px}
+.task:hover p,.task:focus-visible p{padding-right:16px}
+.task:active{cursor:grabbing;transform:translateY(0)}
+.task.is-dragging,.folder.is-dragging{opacity:.4;transform:rotate(-1deg);cursor:grabbing}
+body.dragging-task,body.dragging-task *{cursor:grabbing!important}
+.kanban-col{transition:background .16s ease,outline-color .16s ease}
+.kanban-col.drag-over,.folder.drag-over{background:#e8f1dc;outline:2px dashed #8aa36d;outline-offset:3px}
+.kanban-col.drag-over header h4{color:#54733e}
+.folder{transition:background .15s,transform .15s}
+.folder{text-align:left;justify-content:flex-start}
+.folder .folder-icon{flex-shrink:0}
+.folder small{flex-shrink:0}
+@media(prefers-reduced-motion:reduce){
+ .task,.kanban-col,.folder,.task::after{transition:none}
+ .task:hover,.task:focus-visible,.task.is-dragging{transform:none}
+}

@@ -1,0 +1,52 @@
+const {app,BrowserWindow}=require('electron');
+app.whenReady().then(async()=>{
+ const win=new BrowserWindow({show:false,width:1500,height:1100,webPreferences:{partition:'research-hub-regression',offscreen:true}});
+ try{
+  await win.loadURL('http://localhost:4173/inbox?isolated=1');
+  const result=await win.webContents.executeJavaScript(`(async()=>{
+   const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,100));
+   openEditor();const noteId=activeNoteId;
+   hubCommit('boards','hub-a',{name:'Research A',columns:['Queue','Reading','Done'],noteId});
+   hubCommit('boards','hub-b',{name:'Research B',columns:['Todo','Working','Done'],noteId});
+   hubCommit('tasks','hub-epic',{text:'Research epic',type:'epic',board:'hub-a',col:'Queue',noteId});
+   hubCommit('tasks','hub-task',{text:'Test architecture',type:'task',parentId:'hub-epic',board:'hub-a',col:'Reading',tag:'research'});
+   hubCommit('tasks','hub-sub',{text:'Run ablation',type:'subtask',parentId:'hub-task',board:'hub-a',col:'Reading'});
+   currentView='board';activeBoard='hub-a';render();openTaskModal('hub-sub');
+   assert(document.querySelector('#hubTaskType').value==='subtask','task type not editable');
+   document.querySelector('#hubTaskTitle').value='Run revised ablation';document.querySelector('#hubSave').click();
+   assert(state.tasks.find(t=>t.id==='hub-sub').text==='Run revised ablation','subtask edits not persisted');
+   hubCommit('boardViews','hub-view',{name:'Combined research',boardIds:['hub-a','hub-b'],columnMap:{'hub-a':{Queue:'Backlog',Reading:'Active'},'hub-b':{Todo:'Backlog',Working:'Active'}}});
+   currentView='board-view';window.activeBoardView='hub-view';render();
+   assert(location.pathname==='/views/hub-view','view lacks route');
+   const card=document.querySelector('[data-task="hub-task"]'),dt=new DataTransfer();card.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:dt}));
+   document.querySelector('[data-view-col="Done"]').dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:dt}));
+   assert(state.tasks.find(t=>t.id==='hub-task').board==='hub-a','aggregate move changed source board');
+   assert(state.tasks.find(t=>t.id==='hub-task').col==='Done','aggregate move did not update source');
+   hubCommit('repositories','hub-repo',{name:'Architecture',url:'https://example.org/repo',noteId});
+   hubCommit('branches','hub-main',{name:'main',repoId:'hub-repo',prStatus:'none'});
+   hubCommit('branches','hub-branch',{name:'ablation',repoId:'hub-repo',parentId:'hub-main',prStatus:'open',prNumber:27,prUrl:'https://example.org/pr/27'});
+   hubCommit('experiments','hub-run-1',{name:'Baseline',status:'trained',metrics:{accuracy:.9,loss:.1},repoId:'hub-repo',branchId:'hub-main',noteId,machine:'gpu-1',cluster:'lab'});
+   hubCommit('experiments','hub-run-2',{name:'Ablation',status:'training',metrics:{accuracy:.8,loss:.2},repoId:'hub-repo',branchId:'hub-branch',noteId,machine:'gpu-2',cluster:'lab'});
+   currentView='experiments';render();
+   document.querySelector('[data-sort-run="accuracy"]').click();assert(document.querySelector('tbody tr').textContent.includes('Ablation'),'metric ascending sort failed');
+   document.querySelector('[data-sort-run="accuracy"]').click();assert(document.querySelector('tbody tr').textContent.includes('Baseline'),'metric descending sort failed');
+   document.querySelector('[data-edit-run="hub-run-2"]').click();document.querySelector('#hubRunStatus').value='trained';document.querySelector('#hubSave').click();
+   assert(state.experiments.find(r=>r.id==='hub-run-2').status==='trained','run status save failed');
+   currentView='repositories';render();assert(document.querySelectorAll('.hub-branch-card').length===3,'branch graph cards missing');
+   assert(document.querySelector('.hub-branch-graph').textContent.includes('PR open #27'),'PR state missing');
+   assert(document.querySelector('.hub-branch-graph').textContent.includes('Ablation · trained'),'run branch link missing');
+   openEditor(state.notes.find(n=>n.id===noteId));insertResearchBlock('experiments',noteId);insertResearchBlock('branches','hub-repo');insertResearchBlock('board','hub-a');await tick();
+   assert(!currentDraftNote().content.includes('<table'),'live results leaked into note snapshot');
+   currentView='papers';render();openEditor(state.notes.find(n=>n.id===noteId));await tick();
+   assert(document.querySelector('.hub-results'),'results embed lost after reopen');assert(document.querySelector('.hub-branch-graph'),'branch embed lost after reopen');
+   openArchitectureComposer();document.querySelector('#architectureMarkup').value='<a style="display:block;width:200px;height:100px" href="/boards/hub-a">Open source board</a>';document.querySelector('#insertArchitecture').click();await tick();
+   const frame=document.querySelector('.architecture-frame');frame.scrollIntoView();await tick();const rect=frame.getBoundingClientRect();
+   return {noteId,x:Math.round(rect.left+40),y:Math.round(rect.top+40),frameTop:rect.top,frameHeight:rect.height,hit:document.elementFromPoint(rect.left+40,rect.top+40)?.tagName};
+  })()`);
+  await win.webContents.executeJavaScript(`document.querySelector('.architecture-frame').contentDocument.querySelector('a').click()`);
+  await new Promise(r=>setTimeout(r,120));
+  const destination=await win.webContents.executeJavaScript(`({path:location.pathname,isolated:new URLSearchParams(location.search).has('isolated'),board:Boolean(document.querySelector('.board-page'))})`);
+  if(destination.path!=='/boards/hub-a'||!destination.isolated||!destination.board)throw Error('Clickable diagram navigation failed: '+JSON.stringify(destination));
+  console.log('PASS: epic/task/subtask edits, aggregate drag preserves source, numeric metric sorting, run editing, PR/training graph, live embeds autosave, actual sandbox link click navigation');app.exit(0);
+ }catch(error){console.error(error);app.exit(1)}
+});

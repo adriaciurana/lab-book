@@ -1,0 +1,29 @@
+.library-collections{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0}
+.library-collections button{padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--muted)}
+.library-collections button.active{background:var(--ink);color:var(--paper)}
+.library-list-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin:20px 0}
+.library-list-head select{max-width:220px;padding:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px}
+/* The tag filter is intentionally a native control: custom arrow art can be
+   painted once per option by some Chromium builds in dark mode. */
+.library-list-head>select{appearance:auto;-webkit-appearance:auto;background-image:none;padding-right:9px;min-height:40px}
+.paper-title-link{text-decoration:none;color:var(--ink)}
+.paper-title-link:hover{text-decoration:underline;text-decoration-color:#8aa36d}
+.paper-card .paper-actions{flex-wrap:wrap;justify-content:flex-end;max-width:150px}
+.paper-card .paper-actions a{font-size:12px;text-decoration:none;white-space:nowrap}
+.paper-detail{max-width:1100px;margin:auto;padding:35px 45px 80px}
+.paper-detail>.eyebrow{margin-top:28px}
+.paper-detail h1{font:38px 'Playfair Display';line-height:1.2;margin:14px 0}
+.paper-detail>.muted{line-height:1.6;font-size:13px}
+.paper-detail-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:25px 0 10px}
+.guide-status{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:25px}
+.guide-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.guide-section{background:var(--panel);padding:22px;border:1px solid var(--line);border-radius:12px}
+.guide-section:first-child{grid-column:1/-1;background:var(--soft)}
+.guide-section h3{font-size:15px;margin:0 0 12px}
+.guide-section p,.guide-section li{font-size:14px;line-height:1.75;color:var(--ink)}
+.guide-section ul{padding-left:18px;margin:0}
+.summary-upload-choice{display:flex!important;gap:10px;align-items:flex-start;background:var(--soft);padding:12px;border-radius:9px}
+.summary-upload-choice input{width:16px!important;margin-top:2px!important}
+.summary-upload-choice small{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.5}
+.paper-detail #paperDetailReader{margin-bottom:25px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+@media(max-width:700px){.paper-detail{padding:25px 18px}.guide-layout{grid-template-columns:1fr}.paper-detail h1{font-size:29px}}

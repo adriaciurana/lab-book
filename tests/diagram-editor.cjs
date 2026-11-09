@@ -1,0 +1,47 @@
+const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-diagrams-')));
+app.whenReady().then(async()=>{
+ const win=new BrowserWindow({show:false,width:1500,height:1100});
+ win.webContents.on('console-message',event=>{if(event.level==='error')console.error(event.message)});
+ try{
+  await win.loadURL('http://localhost:4175/inbox?isolated=1');
+  await win.webContents.executeJavaScript(`(async()=>{
+   const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,120));
+   openEditor();const noteId=activeNoteId;openArchitectureComposer();
+   const scene=()=>JSON.parse(decodeURIComponent(new DOMParser().parseFromString(document.querySelector('#architectureMarkup').value,'image/svg+xml').documentElement.dataset.labbookDiagram));
+   assert(document.querySelectorAll('[data-diagram-node]').length===4,'pipeline template missing');
+   document.querySelector('[data-add-shape="box"]').click();assert(scene().nodes.length===5,'add block failed');
+   const set=(id,value)=>{const input=document.querySelector('#'+id);input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}))};
+   set('diagramLabel','Frozen encoder');set('diagramLink','/notes/'+noteId);set('diagramFontSize','20');
+   const node=scene().nodes.at(-1);assert(node.label==='Frozen encoder'&&node.href==='/notes/'+noteId,'properties failed');
+   const canvas=document.querySelector('#diagramCanvas');canvas.setPointerCapture=()=>{};
+   function emit(target,type,x,y){const point=new DOMPoint(x,y).matrixTransform(canvas.getScreenCTM());target.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:1,button:0,clientX:point.x,clientY:point.y}))}
+   emit(document.querySelector('[data-diagram-node="'+node.id+'"]'),'pointerdown',node.x+15,node.y+15);emit(canvas,'pointermove',node.x+65,node.y+45);emit(canvas,'pointerup',node.x+65,node.y+45);
+   const moved=scene().nodes.find(n=>n.id===node.id);assert(moved.x===node.x+50&&moved.y===node.y+30,'drag failed');
+   const handle=document.querySelector('[data-node-resize]');emit(handle,'pointerdown',moved.x+moved.w,moved.y+moved.h);emit(canvas,'pointermove',moved.x+moved.w+40,moved.y+moved.h+20);emit(canvas,'pointerup',moved.x+moved.w+40,moved.y+moved.h+20);
+   assert(scene().nodes.find(n=>n.id===node.id).w===node.w+40,'resize failed');
+   document.querySelector('#diagramUndo').click();assert(scene().nodes.find(n=>n.id===node.id).w===node.w,'undo failed');document.querySelector('#diagramRedo').click();
+   document.querySelector('[data-diagram-node="'+node.id+'"]').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1,button:0,clientX:0,clientY:0}));canvas.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1}));
+   document.querySelector('#diagramDuplicate').click();assert(scene().nodes.length===6,'duplicate failed');document.querySelector('#diagramDelete').click();assert(scene().nodes.length===5,'delete failed');
+   document.querySelector('#diagramConnect').click();document.querySelector('[data-diagram-node="input"]').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}));document.querySelector('[data-diagram-node="'+node.id+'"]').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,button:0}));assert(scene().edges.length===4,'connector failed');
+   const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jK1sAAAAASUVORK5CYII=';
+   const bytes=Uint8Array.from(atob(png.split(',')[1]),c=>c.charCodeAt(0)),file=new File([bytes],'fixture.png',{type:'image/png'}),dt=new DataTransfer();dt.items.add(file);document.querySelector('#diagramImageInput').files=dt.files;document.querySelector('#diagramImageInput').dispatchEvent(new Event('change'));await tick();await tick();
+   assert(scene().nodes.some(n=>n.kind==='image'),'uploaded image missing: '+document.querySelector('#diagramStatus').textContent);
+   const nativeFetch=window.fetch;window.fetch=async(url,options)=>String(url)==='/api/diagrams/generate'?{ok:true,json:async()=>JSON.parse(options.body).mode==='image'?{mode:'image',image:png}:{mode:'editable',scene:DiagramModel.template('training')}}:nativeFetch(url,options);
+   document.querySelector('#diagramPrompt').value='Two-stage training with frozen encoder';document.querySelector('#diagramGenerate').click();await tick();assert(scene().nodes.length===8,'editable AI response not applied');
+   document.querySelector('#diagramGenerationMode').value='image';document.querySelector('#diagramGenerate').click();await tick();assert(scene().nodes.at(-1).kind==='image','generated image missing');
+   window.fetch=async(url,options)=>String(url)==='/api/diagrams/generate'?{ok:false,json:async()=>({error:'Generation fixture failed'})}:nativeFetch(url,options);
+   const before=scene().nodes.length;document.querySelector('#diagramGenerate').click();await tick();assert(document.querySelector('#diagramStatus').textContent.includes('fixture failed')&&scene().nodes.length===before,'AI failure destroyed canvas');window.fetch=nativeFetch;
+   const downloads=[],nativeClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download)downloads.push(this.download);else nativeClick.call(this)};
+   document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();await tick();await tick();assert(downloads.includes('research-diagram.svg')&&downloads.includes('research-diagram.png'),'export failed: '+document.querySelector('#diagramStatus').textContent);HTMLAnchorElement.prototype.click=nativeClick;
+   document.querySelector('#insertArchitecture').click();await tick();assert(currentDraftNote().content.includes('data-architecture'),'diagram not autosaved');
+   currentView='papers';render();openEditor(state.notes.find(n=>n.id===noteId));document.querySelector('.architecture-block button').click();assert(scene().nodes.length===before,'scene lost after reopen');
+   assert(document.querySelector('#diagramPrompt')&&document.querySelector('#diagramImageInput'),'image/prompt tools missing on edit');
+   document.querySelector('#diagramSourceToggle').click();document.querySelector('#architectureMarkup').value='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><a href="/notes/'+noteId+'"><rect x="20" y="20" width="170" height="80" fill="#e3f3df"/><text x="50" y="65">Linked block</text></a></svg>';document.querySelector('#insertArchitecture').click();await tick();
+   document.querySelector('.architecture-block button').click();assert(document.querySelector('[data-diagram-node]'),'SVG primitive import failed');
+   document.querySelector('#diagramTemplate').value='training';document.querySelector('#diagramTemplate').dispatchEvent(new Event('change'));await tick();
+  })()`);
+  fs.writeFileSync('/tmp/labbook-diagram-editor.png',(await win.webContents.capturePage()).toPNG());
+  console.log('PASS: visual templates, labels/links/colors, drag/resize, undo/redo, duplicate/delete, connectors, image upload, AI adapters/failure, autosave/reopen, editable SVG import');app.exit(0);
+ }catch(error){console.error(error);app.exit(1)}
+});

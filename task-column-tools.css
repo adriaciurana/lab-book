@@ -1,0 +1,13 @@
+.kanban-col{display:flex;flex-direction:column}.kanban-col>header,.kanban-col>.task{flex-shrink:0}
+.column-add-task{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;padding:11px 10px;min-height:40px;margin-top:auto;border:1px dashed var(--line);border-radius:8px;color:var(--muted);text-align:left;font-size:12px}
+.column-add-task svg,.task-note-link svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;flex-shrink:0}
+.column-add-task:hover,.column-add-task:focus-visible{background:var(--selection);border-color:var(--muted);color:var(--ink)}
+.task .task-note-link{display:flex;gap:6px;align-items:center;font-size:11px;line-height:1.5;margin-top:12px;padding-top:8px;border-top:1px solid var(--line);color:var(--accent-ink);cursor:pointer;text-decoration:none}
+.task-note-link span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task .task-note-link:hover{text-decoration:underline}
+body select.task-page-native{display:none!important}.task-page-picker{position:relative;margin-top:8px;min-width:0}
+.task-page-trigger{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;min-height:44px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:10px;text-align:left}
+.task-page-trigger>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.task-page-trigger svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;flex-shrink:0}
+.task-page-trigger:focus-visible,.task-page-trigger[aria-expanded="true"]{outline:2px solid var(--accent);outline-offset:2px}
+.task-page-popover{position:absolute;z-index:30;top:calc(100% + 7px);width:100%;box-sizing:border-box;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:var(--shadow)}.task-page-popover[hidden]{display:none}
+#composerModal .task-page-search{width:100%;box-sizing:border-box;margin:0;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:13px}
+#taskPageChoices{max-height:230px;overflow:auto;padding-top:6px}#taskPageChoices [role="option"]{padding:10px;border-radius:7px;cursor:pointer}#taskPageChoices [role="option"].is-active{background:var(--hover)}#taskPageChoices [aria-selected="true"]{background:var(--selection)}#taskPageChoices strong{display:block;font-weight:500;font-size:13px;overflow-wrap:anywhere}#taskPageChoices small{display:block;color:var(--muted);font-size:11px;line-height:1.5;margin-top:4px}.task-page-empty{padding:10px;font-size:12px}

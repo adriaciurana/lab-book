@@ -1,0 +1,33 @@
+.paper-side-panel{min-width:0}
+.paper-side-body.local-reader{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;height:75vh;min-height:420px}
+.reader-controls{display:flex;align-items:center;gap:5px;padding:10px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.reader-controls button,.reader-selection button,.reader-annotation button{padding:6px 9px;border-radius:6px;background:var(--soft);font-size:12px}
+.reader-controls button:hover,.reader-selection button:hover{background:var(--lime);color:#17221e}
+.reader-controls button:disabled,.reader-selection button:disabled{opacity:.4;cursor:default}
+.reader-controls input{width:48px;border:1px solid var(--line);border-radius:5px;padding:5px;color:var(--ink);background:var(--panel)}
+.reader-controls span,.reader-controls a{font-size:11px;color:var(--muted)}
+.reader-gap{flex:1}
+.reader-scroll{flex:1;min-height:0;overflow:auto;padding:16px;background:#e8ebe5}
+.reader-sheet{position:relative;margin:0 auto;background:white;box-shadow:0 3px 16px #17221e20}
+.reader-sheet canvas{display:block}
+.reader-sheet .textLayer{position:absolute;inset:0;overflow:clip;line-height:1;text-align:initial;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
+.reader-sheet .textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
+.reader-sheet .textLayer> :not(.markedContent),.reader-sheet .textLayer .markedContent span:not(.markedContent){z-index:1}
+.reader-sheet .textLayer span.markedContent{top:0;height:0}
+.reader-sheet .textLayer ::selection{background:#b4d5ff99}
+.reader-highlights{position:absolute;inset:0;pointer-events:none;z-index:3}
+.reader-highlight{position:absolute;background:#d8f56d66;border-bottom:2px solid #8ba948;mix-blend-mode:multiply}
+.reader-highlight.is-linked-hover{background:#ff806d88}
+.reader-selection{display:flex;gap:8px;align-items:center;padding:9px 12px;background:var(--panel);border-top:1px solid var(--line);flex-wrap:wrap}
+.reader-selection span{flex:1;font-size:11px;color:var(--muted)}
+.reader-annotations{max-height:125px;overflow:auto;background:var(--panel)}
+.reader-annotation{display:flex;align-items:center;gap:6px;padding:7px 12px;border-top:1px solid var(--line);font-size:11px}
+.reader-annotation span{flex:1}
+.detached-paper-reader .sidebar,.detached-paper-reader .topbar{display:none!important}
+.detached-paper-reader .app-shell{display:block}
+.detached-paper-reader main{margin:0;width:100%;min-width:0}
+.detached-reader-layout{display:flex;flex-direction:column;height:100dvh;padding:12px;box-sizing:border-box;gap:10px}
+.detached-reader-layout>header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:5px 8px;font-size:13px}
+.detached-reader-layout>header strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.detached-reader-layout>header a{white-space:nowrap;color:var(--muted);font-size:12px}
+.detached-reader-layout>.paper-side-body.local-reader{height:auto;flex:1;min-height:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.reader-controls .reader-highlight-picker{max-width:240px;min-width:130px;width:auto;font-size:11px;padding:6px 28px 6px 8px;border:1px solid var(--line);border-radius:6px;background-color:var(--panel);color:var(--ink)}

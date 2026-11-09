@@ -1,0 +1,19 @@
+[Unit]
+Description=Lab Book production workspace
+After=network.target
+
+[Service]
+Type=simple
+User=adria
+WorkingDirectory=/home/adria/lab-book
+ExecStart=/usr/bin/node /home/adria/lab-book/server.cjs
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4173
+EnvironmentFile=-/home/adria/.config/lab-book/environment
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
