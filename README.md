@@ -53,6 +53,13 @@ To restore a previous test backup, stop the test server, preserve or rename the 
 
 ## Direct links and navigation
 
+Pages open in read mode and display the last published version. Choose **Edit**
+to work on the autosaved draft; **Publish version** creates a version and updates
+the published page. Closing the editor preserves the draft without publishing
+it. Existing manual versions serve as published snapshots. A page without any
+published version displays an unpublished notice. Explicit editor links use
+`/notes/<id>?edit=1`.
+
 Each section has its own URL: /inbox, /research, /skills, /papers, /boards. Notes use /notes/<id>, folders /folders/<id>, individual boards /boards/<id>, and papers /papers/<id>. Deep links survive reloads and browser Back/Forward. Use Copy link in a note's toolbar to copy its address.
 
 ## Reading guides and curated library

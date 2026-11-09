@@ -10,7 +10,7 @@ app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false});
  try{
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  await win.loadURL(`http://127.0.0.1:${server.address().port}/notes/test-note`);
+  await win.loadURL(`http://127.0.0.1:${server.address().port}/notes/test-note?edit=1`);
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)};
    const body=document.querySelector('.editor-body');body.innerHTML='<p>First edit</p>';assert(persistDraft(),'First save failed');

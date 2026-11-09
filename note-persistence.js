@@ -57,17 +57,18 @@ openEditor=function(note){
   else{const paragraph=document.createElement('p');if(note.desc)paragraph.textContent=note.desc;else paragraph.append(document.createElement('br'));activeBody.replaceChildren(paragraph)}
   document.querySelector('.editor .title').value=note.title;
   const manual=document.querySelector('#saveNote');
-  manual.textContent='Save version';
+  manual.textContent='Publish version';
   manual.onclick=()=>{
     if(!flushDraft())return;
     const latest=currentDraftNote();
     latest.versions=latest.versions||[];
-    latest.versions.push({...editorSnapshot(),savedAt:new Date().toISOString()});
+    const published={...editorSnapshot(),savedAt:new Date().toISOString()};
+    latest.versions.push(published);latest.published=structuredClone(published);
     latest.draft=false;
-    try{save();toast('Version saved');updateRollbackState()}catch{toast('Unable to save this version')}
+    try{save();toast('Version published');updateRollbackState()}catch{toast('Unable to publish this version')}
   };
   document.querySelector('#cancelEdit').textContent='Close';
-  document.querySelector('#cancelEdit').onclick=()=>{if(flushDraft())render()};
+  document.querySelector('#cancelEdit').onclick=()=>{if(flushDraft())typeof renderPublishedNote==='function'?renderPublishedNote(currentDraftNote()):render()};
   const rollback=document.createElement('button');
   rollback.id='rollbackDraft';rollback.className='btn ghost';rollback.textContent='Rollback draft';
   rollback.onclick=rollbackDraft;manual.after(rollback);
