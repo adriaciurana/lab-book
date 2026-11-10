@@ -2,6 +2,12 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Images and documents in research context
+
+Use **Attach images or documents**, drop files onto the Research context panel, or paste clipboard images/files while focused inside it. Ordinary text paste continues to work in the question field. Supported formats: PNG, JPEG, WebP, GIF, PDF, DOCX, PPTX, XLSX, TXT, Markdown, CSV and JSON. Attach up to 10 files, 5 MB each and 20 MB combined. Cards show image previews, filenames, an open/download link and a remove action.
+
+Files are stored under `data/<environment>/attachments/`; context saves only references, so attachments survive navigation and reloads. Production-to-test migration copies them along with the rest of the environment. Removing a card excludes it from the question; it does not delete the underlying stored file. Files are sent to OpenAI when you ask a question: images as image inputs, binary documents as file inputs, and plain text directly. See [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs). Run `npm run test:attachments` for upload, drop, paste, persistence and request checks without paid API calls.
+
 ## Workspace skills
 
 The research assistant shows the selected skill's description and offers **Edit skill**, **Duplicate**, and **+ New skill**. The Skills library provides the same actions. Define a name, description, category and instructions; the instructions are sent to the assistant with your question. Duplicates have independent IDs. Editing a bundled mode creates a workspace override without modifying its installed agent files. Definitions are saved on the server separately in each environment and survive reloads. Run `npm run test:skills` to verify the editor and persistence without making paid API calls.

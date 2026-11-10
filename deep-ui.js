@@ -125,7 +125,7 @@ function renderContextUI(){
  if(!state.context.length){const empty=document.createElement('span');empty.className='muted';empty.textContent='Select whole notes and papers, or just the passages you need.';sources.append(empty)}
  state.context.forEach((item,index)=>{
   const chip=document.createElement('span');chip.className='context-chip';
-  const label=document.createElement('span');label.textContent=(item.type==='paragraph'?'Paragraph · ':item.type==='region'?'Highlight · ':item.type==='note'?'Note · ':'Paper · ')+item.label+(item.page?' · '+item.page:'');
+  const label=document.createElement('span');label.textContent=(item.type==='attachment'?'Attachment · ':item.type==='paragraph'?'Paragraph · ':item.type==='region'?'Highlight · ':item.type==='note'?'Note · ':'Paper · ')+item.label+(item.page?' · '+item.page:'');
   const remove=document.createElement('button');remove.textContent='×';remove.setAttribute('aria-label','Remove '+item.label);
   remove.onclick=()=>{state.context.splice(index,1);save();renderContextUI()};chip.append(label,remove);sources.append(chip);
  });

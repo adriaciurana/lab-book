@@ -23,6 +23,7 @@ function parseModelJson(text,filename){
 }
 const server = http.createServer(async(req,res)=>{
   try{if(await runtime.handle(req,res))return}catch(error){if(!res.headersSent&&!res.writableEnded)runtime.json(res,400,{error:error.message});return}
+  if(req.url.split('?')[0]==='/api/research-attachments'||req.url.startsWith('/api/research-attachments/'))return require('./research-attachments.cjs').handle(req,res);
   if(req.method==='POST' && req.url==='/api/search')return require('./research-search.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/diagrams/generate')return require('./diagram-service.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/diagrams/harmonize')return require('./diagram-harmonize.cjs').handle(req,res,configuredKey);

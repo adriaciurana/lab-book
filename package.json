@@ -48,7 +48,8 @@
     "test:diagram-harmonize": "node --test tests/diagram-harmonize.cjs tests/diagram-service.cjs",
     "test:diagram-chat": "env -u ELECTRON_RUN_AS_NODE electron tests/diagram-chat.cjs",
     "test:nested-pages": "env -u ELECTRON_RUN_AS_NODE electron tests/nested-pages.cjs",
-    "test:skills": "env -u ELECTRON_RUN_AS_NODE electron tests/skill-manager.cjs"
+    "test:skills": "env -u ELECTRON_RUN_AS_NODE electron tests/skill-manager.cjs",
+    "test:attachments": "env -u ELECTRON_RUN_AS_NODE electron tests/research-attachments.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -78,7 +79,8 @@
       "agent-api.md",
       "skills/**/*",
       "node_modules/pdfjs-dist/build/*.mjs",
-      "package.json"
+      "package.json",
+      "research-attachments.cjs"
     ],
     "mac": {
       "category": "public.app-category.productivity"
