@@ -44,7 +44,9 @@
     "workspace:clean": "node clean-production.cjs",
     "desktop": "env -u ELECTRON_RUN_AS_NODE electron .",
     "desktop:dev": "concurrently \"node server.cjs\" \"wait-on http://localhost:4173 && env -u ELECTRON_RUN_AS_NODE electron .\"",
-    "package:desktop": "electron-builder"
+    "package:desktop": "electron-builder",
+    "test:diagram-harmonize": "node --test tests/diagram-harmonize.cjs tests/diagram-service.cjs",
+    "test:diagram-chat": "env -u ELECTRON_RUN_AS_NODE electron tests/diagram-chat.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -70,6 +72,7 @@
       "research-api.cjs",
       "skill-catalog.cjs",
       "diagram-service.cjs",
+      "diagram-harmonize.cjs",
       "agent-api.md",
       "skills/**/*",
       "node_modules/pdfjs-dist/build/*.mjs",

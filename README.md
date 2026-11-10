@@ -2,6 +2,16 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Scientific figure editor and AI harmonization
+
+Open a diagram in a note, or add one with **+ → Diagram**. The **Research figure · grouped representations** template demonstrates panels, patch grids, token strips, stacked layers and a role legend. Configure grid dimensions and layer/token counts in the properties panel. Use scientific roles for consistent input, frozen, trained, optional and loss colors. Shift-click to select objects, then group, align or distribute them. Moving a group moves its contents.
+
+**Harmonize with AI** opens a conversation with a figure designer. Add instructions, select workspace pages as context, and attach up to four PNG/JPEG/WebP reference images (2 MB each). The server sends this context, the editable scene and a canvas preview to OpenAI. A separate proposal preview lets you refine the result before choosing **Apply proposal**. Applying supports Undo; save the diagram to retain it in the note. Accepted conversation text is retained with the diagram; reference attachments are temporary.
+
+The default model is `gpt-5.5`. The model field accepts another API model ID available to your account, including `gpt-6-astra`; the server default can also be set with `LABBOOK_HARMONIZE_MODEL`. Configure `OPENAI_API_KEY` on the server. Harmonization preserves component identities, labels, dimensions, links, images and connection endpoints; invalid proposals are rejected. Imported artwork retained as an image remains a locked image layer, rather than becoming fully editable shapes.
+
+Run `npm run test:diagram-harmonize` for model/adapter checks and `npm run test:diagram-chat` for the browser flow. These tests simulate OpenAI responses and do not spend API credits.
+
 ## Getting started
 
 ```bash

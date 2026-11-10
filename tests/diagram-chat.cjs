@@ -1,0 +1,31 @@
+const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+process.env.LABBOOK_DATA_DIR=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-diagram-chat-'));
+const server=require('../server.cjs');
+app.whenReady().then(async()=>{try{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const win=new BrowserWindow({show:false,width:1400,height:1000});
+ await win.loadURL(`http://127.0.0.1:${server.address().port}/inbox?isolated=1`);
+ await win.webContents.executeJavaScript(`(async()=>{
+  const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,120));
+  openEditor();openArchitectureComposer();
+  const scene=()=>JSON.parse(decodeURIComponent(new DOMParser().parseFromString(document.querySelector('#architectureMarkup').value,'image/svg+xml').documentElement.dataset.labbookDiagram));
+  document.querySelector('#diagramTemplate').value='research';document.querySelector('#diagramTemplate').dispatchEvent(new Event('change'));
+  assert(scene().nodes.some(n=>n.kind==='group')&&scene().nodes.some(n=>n.kind==='tokenstrip'),'Research template missing');
+  document.querySelector('[data-add-shape="patchgrid"]').click();const rows=document.querySelector('#diagramPrimitiverows');assert(rows,'Grid controls missing');rows.value='6';rows.dispatchEvent(new Event('change'));assert(scene().nodes.at(-1).rows===6,'Grid configuration failed');
+  document.querySelector('#diagramUndo').click();document.querySelector('#diagramUndo').click();
+  document.querySelector('#diagramHarmonize').click();assert(!document.querySelector('.diagram-ai-panel').hidden,'Chat not opened');
+  const nativeFetch=fetch;let sent;
+  window.fetch=async(url,options)=>{if(url!=='/api/diagrams/harmonize')return nativeFetch(url,options);sent=JSON.parse(options.body);const next=structuredClone(sent.scene);next.nodes.find(n=>n.id==='module').x+=10;return {ok:true,json:async()=>({reply:'More space around the model.',scene:next,model:sent.model})}};
+  const before=scene().nodes.find(n=>n.id==='module').x;
+  document.querySelector('#diagramAIContext').value='The model is frozen except the proposed component.';
+  const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jK1sAAAAASUVORK5CYII=';
+  const bytes=Uint8Array.from(atob(png.split(',')[1]),c=>c.charCodeAt(0)),dt=new DataTransfer();dt.items.add(new File([bytes],'reference.png',{type:'image/png'}));const upload=document.querySelector('#diagramAIImages');upload.files=dt.files;upload.dispatchEvent(new Event('change'));await tick();
+  document.querySelector('#diagramAIMessage').value='Refine the spacing and typography';document.querySelector('#diagramAISend').click();await tick();await tick();await tick();
+  assert(sent&&sent.images.length===1&&sent.preview.startsWith('data:image/png'),'Image context and canvas not sent');assert(sent.context.includes('frozen')&&sent.model==='gpt-5.5','Context or model missing');
+  assert(scene().nodes.find(n=>n.id==='module').x===before,'Proposal changed the canvas before acceptance');
+  assert(!document.querySelector('#diagramAIApply').disabled,'Apply unavailable');document.querySelector('#diagramAIApply').click();assert(scene().nodes.find(n=>n.id==='module').x===before+10,'Proposal not applied');assert(scene().assistantHistory.length===2,'Chat not retained with accepted proposal');
+  document.querySelector('#diagramUndo').click();assert(scene().nodes.find(n=>n.id==='module').x===before,'Undo of harmonization failed');
+  window.fetch=async()=>({ok:false,json:async()=>({error:'Fixture API unavailable'})});document.querySelector('#diagramAIMessage').value='Try again';document.querySelector('#diagramAISend').click();await tick();await tick();assert(document.querySelector('#diagramAIStatus').textContent.includes('Fixture API'),'API error not shown');assert(scene().nodes.find(n=>n.id==='module').x===before,'API failure changed canvas');window.fetch=nativeFetch;
+ })()`);
+ fs.writeFileSync('/tmp/labbook-diagram-chat.png',(await win.webContents.capturePage()).toPNG());
+ console.log('PASS: research primitives, grid configuration, chat, reference images, context, proposal review, apply, undo and error recovery');server.close();app.exit(0);
+ }catch(error){console.error(error);server.close();app.exit(1)}});
