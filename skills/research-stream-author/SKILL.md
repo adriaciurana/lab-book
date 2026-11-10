@@ -11,9 +11,12 @@ language. The example that informed this skill is a communication reference,
 not evidence for a new project's results.
 
 Read [references/communication.md](references/communication.md) for the
-communication pattern. When writing to Lab Book, also read
+communication pattern and [references/visual-style.md](references/visual-style.md)
+for the figure/table vocabulary. When writing to Lab Book, also read
 [references/lab-book.md](references/lab-book.md). The optional
-[assets/stream.html](assets/stream.html) is a small HTML/SVG starting point.
+[assets/stream.html](assets/stream.html) and
+[assets/framework.svg](assets/framework.svg) form a starting point. Insert
+the SVG at the template's data-stream-figure placeholder when used standalone.
 
 ## Establish the project memory
 
