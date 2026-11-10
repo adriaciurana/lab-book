@@ -32,12 +32,12 @@ function persistDraft(){
   Object.assign(note,snap,{draft:true,tag:'draft',updatedAt:new Date().toISOString()});
   try {
     save();
-    document.querySelector('.editor-meta .muted:last-child').textContent='Draft saved';
+    const status=document.querySelector('.editor-meta .muted:last-child');if(status)status.textContent='Draft saved';
     updateRollbackState();return true;
   } catch(error) {
     Object.assign(note,previous);
     document.querySelector('#saveStatus').textContent='Save failed: '+error.message;
-    document.querySelector('.editor-meta .muted:last-child').textContent='Unsaved changes';
+    const status=document.querySelector('.editor-meta .muted:last-child');if(status)status.textContent='Unsaved changes';
     return false;
   }
 }
