@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research stream author"
+  short_description: "Visual research narratives linked to runs and findings"
+  default_prompt: "Use $research-stream-author to create or update this research stream with a clear pipeline, controlled experiment plan and evidence-linked findings."

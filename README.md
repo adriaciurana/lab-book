@@ -194,6 +194,28 @@ npm run test:appearance
 The persistence regression uses an in-memory browser session and isolated=1 to prevent writes to the production database.
 ## Research pages, work items and experiments
 
+### Visual research communication
+
+**Skills library → Research stream author** provides a style based on the
+supplied research communication example: motivation first, a complete
+pipeline with a frozen/trainable legend, design-space tradeoffs, staged
+experiment plans, fair baseline comparisons and dated findings linked to runs.
+Choose **Create visual stream** for an editable draft scaffold with an SVG
+pipeline and plan tables. **Use skill** selects its complete authoring
+instructions in the research assistant. Add your notes, papers and evidence
+as context; the assistant produces a draft and has no automatic write tools.
+
+The same skill is available to local agents as `$research-stream-author` and
+is maintained in `skills/research-stream-author/`. Its Lab Book reference
+describes how an agent can update the workspace through the HTTP API while
+preserving IDs, run evidence, human edits and published versions. Agent
+instructions are available at
+`/api/v1/skill?name=research-stream-author&resource=bundle`.
+
+The template starts with explicitly unmeasured results, not the original
+example's run data. The example's HTML/PDF and private research results are
+not copied into the repository. Publication remains an explicit action.
+
 ### A short path from idea to evidence
 
 A page's **Related** area brings together its boards, linked tasks,
