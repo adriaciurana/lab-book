@@ -441,3 +441,11 @@ overwriting agent changes. The reusable skill is
 Run `npm run test:workspace` for template, nested page, diagram navigation
 and autosave checks. Research API tests use temporary data directories and
 never modify the real library.
+
+### Agent writing quality
+
+My agent uses `gpt-6.1-sol` with low reasoning effort by default. Override `LABBOOK_AGENT_MODEL` for the conversation/proposal model and `LABBOOK_WRITER_MODEL` for detailed documents. Paper metadata extraction and other lightweight utilities keep their own models.
+
+Explanatory page proposals pass through a dedicated document-writing step before they are shown for confirmation. Each document receives its own topic and sources, rather than the full historical conversation that caused repeated chronologies. Placeholder explanations and substantially duplicated page bodies are rejected before confirmation. Explicit requests for short notes or blank templates remain supported. All proposed workspace writes still require Apply selected.
+
+Workspace consolidation uses explicit reviewed source/target mappings (`workspace-consolidation.cjs`). It archives source pages, preserves their content and target versions, and rewires active links and children. Different owners or visibility levels cannot be merged automatically. Old page URLs follow `mergedInto` to the canonical document.
