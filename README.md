@@ -2,6 +2,10 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Workspace skills
+
+The research assistant shows the selected skill's description and offers **Edit skill**, **Duplicate**, and **+ New skill**. The Skills library provides the same actions. Define a name, description, category and instructions; the instructions are sent to the assistant with your question. Duplicates have independent IDs. Editing a bundled mode creates a workspace override without modifying its installed agent files. Definitions are saved on the server separately in each environment and survive reloads. Run `npm run test:skills` to verify the editor and persistence without making paid API calls.
+
 ## Pages inside pages
 
 Every workspace page can contain its own text and child pages. Use the **+** beside any sidebar page, or **+ Add page** in its published view, to create a blank document or choose a template inside it. Expand the arrow to browse children. Drag a page onto another page to nest it; its descendants move with it. Dropping onto a collection moves the entire page subtree there. Cyclic nesting is blocked.

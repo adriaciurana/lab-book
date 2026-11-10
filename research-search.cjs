@@ -1,7 +1,7 @@
-function buildRequest({query,context=[],skill='',skillId='',webSearch=true}){
+function buildRequest({query,context=[],skill='',skillId='',skillCustom=false,webSearch=true}){
  if(typeof query!=='string'||!query.trim())throw Error('A question is required');
  if(!Array.isArray(context))throw Error('Invalid research context');
- if(skillId==='research-stream-author')skill=require('./skill-catalog.cjs').readSkill(skillId,'bundle')+'\nThis assistant has no workspace mutation tools. Return an actionable draft using the selected evidence; never claim that records were saved or published.';
+ if(skillId==='research-stream-author'&&!skillCustom)skill=require('./skill-catalog.cjs').readSkill(skillId,'bundle')+'\nThis assistant has no workspace mutation tools. Return an actionable draft using the selected evidence; never claim that records were saved or published.';
  if(context.reduce((size,item)=>size+String(item.text||'').length,0)>500000)throw Error('Context is too large. Select fewer sources or individual passages.');
  const sources=context.map((source,index)=>'[S'+(index+1)+'] '+JSON.stringify({type:source.type,title:source.label,page:source.page,noteId:source.noteId,paperId:source.paperId})+'\n'+String(source.text||source.url||'')).join('\n\n');
  return {model:'gpt-4.1-mini',store:false,

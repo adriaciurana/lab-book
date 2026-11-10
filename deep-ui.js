@@ -168,7 +168,7 @@ proxySearch=async function(){
  results.textContent='Preparing selected context…';document.querySelector('#askContext').disabled=true;
  try{
   const context=await resolveResearchContext(),skill=skills.find(s=>s[0]===document.querySelector('#activeSkill').value);
-  const response=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,context,skill:skill?.[4]||'',skillId:skill?.[0]||'',webSearch:document.querySelector('#includeWeb').checked||!context.length})});
+  const response=await fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,context,skill:skill?.[5]||skill?.[4]||'',skillId:skill?.[0]||'',skillCustom:!!skill?.[6],webSearch:document.querySelector('#includeWeb').checked||!context.length})});
   const raw=await response.text();let data;try{data=JSON.parse(raw)}catch{throw Error('Unexpected server response. Restart the server and retry.')}
   if(!response.ok)throw Error(data.error?.message||data.error||'Research request failed');
   const answer=data.output_text||data.output?.flatMap(o=>o.content||[]).map(c=>c.text||'').join('\n')||'No response returned.';

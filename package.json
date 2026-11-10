@@ -47,7 +47,8 @@
     "package:desktop": "electron-builder",
     "test:diagram-harmonize": "node --test tests/diagram-harmonize.cjs tests/diagram-service.cjs",
     "test:diagram-chat": "env -u ELECTRON_RUN_AS_NODE electron tests/diagram-chat.cjs",
-    "test:nested-pages": "env -u ELECTRON_RUN_AS_NODE electron tests/nested-pages.cjs"
+    "test:nested-pages": "env -u ELECTRON_RUN_AS_NODE electron tests/nested-pages.cjs",
+    "test:skills": "env -u ELECTRON_RUN_AS_NODE electron tests/skill-manager.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
