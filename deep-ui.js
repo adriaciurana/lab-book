@@ -23,11 +23,13 @@ function contextKey(item){return item.key||[item.type,item.noteId||item.paperId|
 function contextCandidates(){
  const items=[];
  for(const note of state.notes){
+  if(typeof lifecycleArchived==='function'&&lifecycleArchived('notes',note.id))continue;
   const blocks=noteBlocks(note);
   items.push({key:'note:'+note.id,type:'note',noteId:note.id,label:note.title,text:blocks.join('\n\n'),detail:'Entire note · '+blocks.length+' blocks'});
   blocks.forEach((text,index)=>items.push({key:'paragraph:'+note.id+':'+index,type:'paragraph',noteId:note.id,blockIndex:index,label:note.title,text,detail:'Paragraph '+(index+1)}));
  }
  for(const paper of state.papers||[]){
+  if(typeof lifecycleArchived==='function'&&lifecycleArchived('papers',paper.id))continue;
   items.push({key:'paper:'+paper.id,type:'paper',paperId:paper.id,label:paper.title,detail:'Entire paper · '+(paper.tags||[]).join(', '),text:paper.abstract||paper.note||''});
   for(const region of paper.highlights||[])items.push({key:'region:'+paper.id+':'+region.id,type:'region',paperId:paper.id,regionId:region.id,label:paper.title,text:region.text,page:'p. '+region.pageNumber,detail:'Highlight · p. '+region.pageNumber});
  }

@@ -19,12 +19,12 @@ function taskStreamColor(id){
 }
 function syncTaskBoardRoute(mode,id){if(applyingRoute)return;const url=new URL(location.href);url.pathname=(mode==='combined'?'/views':'/boards')+(id?'/'+encodeURIComponent(id):'');for(const key of ['page','branch','repo','paper'])url.searchParams.delete(key);for(const key of boardFilterKeys)if(taskBoardFilters[key])url.searchParams.set(key,taskBoardFilters[key]);else url.searchParams.delete(key);if(url.pathname+url.search!==location.pathname+location.search)history.pushState({},'',url.pathname+url.search);document.title='Lab Book · '+(document.querySelector('#breadcrumbs').textContent||'Task boards')}
 function renderTaskBoardWorkspace({mode='individual',id}={}){
- const combined=mode==='combined',items=combined?state.boardViews:state.boards;
+ const combined=mode==='combined',items=(combined?state.boardViews:state.boards).filter(r=>typeof lifecycleArchived!=='function'||!lifecycleArchived(combined?'boardViews':'boards',r.id));
  const item=items.find(x=>x.id===id)||items[0];
  if(item){if(combined)window.activeBoardView=item.id;else activeBoard=item.id;taskBoardLast[mode]=item.id;try{localStorage.setItem('labbook-board-last-'+LABBOOK_ENV,JSON.stringify(taskBoardLast))}catch{}}
  currentView=combined?'board-view':'board';
- const boards=item?(combined?state.boards.filter(b=>item.boardIds.includes(b.id)):[item]):[];
- const baseTasks=state.tasks.filter(t=>boards.some(b=>b.id===t.board)),contexts=new Map(baseTasks.map(t=>[t.id,taskBoardContext(t)]));
+ const boards=item?(combined?state.boards.filter(b=>item.boardIds.includes(b.id)&&(typeof lifecycleArchived!=='function'||!lifecycleArchived('boards',b.id))):[item]):[];
+ const baseTasks=state.tasks.filter(t=>(typeof lifecycleArchived!=='function'||!lifecycleArchived('tasks',t.id))&&boards.some(b=>b.id===t.board)),contexts=new Map(baseTasks.map(t=>[t.id,taskBoardContext(t)]));
  const scopeContexts=[...boards.map(board=>taskBoardContext({board:board.id,noteId:board.noteId})),...contexts.values()];const projects=new Map(),streams=new Map();for(const ctx of scopeContexts){projects.set(ctx.projectId,ctx.projectName);streams.set(ctx.streamId,ctx.streamName)}
  if(taskBoardFilters.project&&!projects.has(taskBoardFilters.project))taskBoardFilters.project='';
  const projectStreams=new Map(scopeContexts.filter(c=>!taskBoardFilters.project||c.projectId===taskBoardFilters.project).map(c=>[c.streamId,c.streamName]));

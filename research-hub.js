@@ -9,7 +9,7 @@ function pageResearchContext(id){
  const repositories=state.repositories.filter(r=>noteIds.has(r.noteId)||repoIds.has(r.id)||state.branches.some(b=>b.repoId===r.id&&noteIds.has(b.noteId)));
  return {noteIds,boards,tasks,experiments,repositories};
 }
-function experimentRowsForScope(page='',branch=''){const rows=page?pageResearchContext(page).experiments:state.experiments;return branch?rows.filter(r=>r.branchId===branch):rows}
+function experimentRowsForScope(page='',branch=''){const rows=page?pageResearchContext(page).experiments:state.experiments;return (branch?rows.filter(r=>r.branchId===branch):rows).filter(r=>typeof lifecycleArchived!=='function'||!lifecycleArchived('experiments',r.id))}
 function syncExperimentRoute(page,branch){if(applyingRoute)return;const url=new URL(location.href);url.pathname='/experiments';for(const key of ['project','stream','tag','type','q'])url.searchParams.delete(key);for(const [key,value]of [['page',page],['branch',branch]])if(value)url.searchParams.set(key,value);else url.searchParams.delete(key);if(url.pathname+url.search!==location.pathname+location.search)history.pushState({},'',url.pathname+url.search);document.title='Lab Book · Experiments'}
 function hubCommit(collection,id,patch,remove=false){const previous=state;state=ResearchModel.mutate(state,collection,id,patch,remove);try{save();return state[collection].find(r=>r.id===id)}catch(error){state=previous;throw error}}
 function hubOptions(rows,selected,label='None'){return `<option value="">${label}</option>`+rows.map(r=>`<option value="${hubEscape(r.id)}" ${r.id===selected?'selected':''}>${hubEscape(r.name||r.title||r.text)}</option>`).join('')}
@@ -50,6 +50,7 @@ function renderBoardView(id){return renderTaskBoardWorkspace({mode:'combined',id
 window.addEventListener('drop',e=>{const lane=e.target.closest('[data-view-col]');if(!lane||currentView!=='board-view')return;e.preventDefault();e.stopImmediatePropagation();const id=activeDragTask||dragged?.id,task=state.tasks.find(t=>t.id===id),view=state.boardViews.find(v=>v.id===window.activeBoardView);if(!task||!view)return;const board=state.boards.find(b=>b.id===task.board),matches=board.columns.filter(c=>(view.columnMap?.[board.id]?.[c]||c)===lane.dataset.viewCol);if(matches.length!==1){toast(matches.length?'This destination maps to multiple source columns. Use the task editor.':'This source board has no matching destination column. Configure the view mapping.');return}try{hubCommit('tasks',id,{col:matches[0]});renderBoardView(view.id)}catch(error){toast(error.message)}activeDragTask=null},true);
 let hubMetricSort={key:'name',direction:1};
 function experimentTable(rows){
+ rows=rows.filter(r=>typeof lifecycleArchived!=='function'||!lifecycleArchived('experiments',r.id));
  const columns=TableSchema.columns(state,'experiments').filter(c=>!c.hidden);
  let sortColumn=columns.find(c=>experimentColumnSortKey(c)===hubMetricSort.key);
  if(!sortColumn&&!['name','status','machine','cluster'].includes(hubMetricSort.key))hubMetricSort={key:'name',direction:1};
@@ -102,7 +103,7 @@ function openExperimentEditor(run){return openTypedExperimentEditor(run)}
 let branchGraphSequence=0;
 function branchGraph(repoId){
  const repo=state.repositories.find(r=>r.id===repoId);if(!repo)return '<p>No repository selected.</p>';
- const branches=state.branches.filter(b=>b.repoId===repoId),map=new Map(branches.map(b=>[b.id,b])),cards=[],seen=new Set();let leaves=0;
+ const branches=state.branches.filter(b=>b.repoId===repoId&&(typeof lifecycleArchived!=='function'||!lifecycleArchived('branches',b.id))),map=new Map(branches.map(b=>[b.id,b])),cards=[],seen=new Set();let leaves=0;
  function place(branch,depth){if(seen.has(branch.id))return null;seen.add(branch.id);const children=branches.filter(b=>b.parentId===branch.id).map(b=>place(b,depth+1)).filter(Boolean);const y=children.length?(children[0].y+children.at(-1).y)/2:leaves++*218+22;const card={b:branch,x:260+depth*250,y};cards.push(card);return card}
  const roots=branches.filter(b=>!b.parentId||!map.has(b.parentId)).map(b=>place(b,0)).filter(Boolean),rootY=roots.length?(roots[0].y+roots.at(-1).y)/2:22;
  const height=Math.max(220,leaves*218+24),width=Math.max(550,...cards.map(c=>c.x+240)),selected=new URLSearchParams(location.search).get('branch');
@@ -112,7 +113,7 @@ function branchGraph(repoId){
 }
 function renderRepositories(){
  document.querySelector('#breadcrumbs').textContent='Repositories';
- content.innerHTML=`<div class="page-wrap hub-page"><div class="section-head"><div><div class="eyebrow">CODE & EXPERIMENTS</div><h1>Repositories & branches</h1><p class="muted">Follow an idea from its research page to code, a branch, and the experiments behind it.</p></div><button class="btn primary" id="hubAddRepo">+ Repository</button></div>${state.repositories.map(repo=>`<section class="hub-repo-section" data-repository="${hubEscape(repo.id)}"><div class="section-head"><h2>${hubEscape(repo.name)}</h2><button class="text-btn" data-edit-repo="${hubEscape(repo.id)}">Edit repository</button></div>${branchGraph(repo.id)}</section>`).join('')||'<div class="research-empty-state"><h2>Keep the code beside your research.</h2><p>Add a repository, then connect branches to the experiments that use them.</p></div>'}</div>`;
+ content.innerHTML=`<div class="page-wrap hub-page"><div class="section-head"><div><div class="eyebrow">CODE & EXPERIMENTS</div><h1>Repositories & branches</h1><p class="muted">Follow an idea from its research page to code, a branch, and the experiments behind it.</p></div><button class="btn primary" id="hubAddRepo">+ Repository</button></div>${state.repositories.filter(repo=>typeof lifecycleArchived!=='function'||!lifecycleArchived('repositories',repo.id)).map(repo=>`<section class="hub-repo-section" data-repository="${hubEscape(repo.id)}"><div class="section-head"><h2>${hubEscape(repo.name)}</h2><button class="text-btn" data-edit-repo="${hubEscape(repo.id)}">Edit repository</button></div>${branchGraph(repo.id)}</section>`).join('')||'<div class="research-empty-state"><h2>Keep the code beside your research.</h2><p>Add a repository, then connect branches to the experiments that use them.</p></div>'}</div>`;
  document.querySelector('#hubAddRepo').onclick=()=>openRepositoryEditor();content.querySelectorAll('[data-edit-repo]').forEach(b=>b.onclick=()=>openRepositoryEditor(state.repositories.find(r=>r.id===b.dataset.editRepo)));bindBranchGraph(content);syncWorkspaceRoute('/repositories');
  const query=new URLSearchParams(location.search),branch=query.get('branch'),repo=query.get('repo');requestAnimationFrame(()=>{const card=[...content.querySelectorAll('[data-branch-card]')].find(c=>c.dataset.branchCard===branch),section=[...content.querySelectorAll('[data-repository]')].find(c=>c.dataset.repository===repo);if(card)card.scrollIntoView({block:'center',inline:'center'});else section?.scrollIntoView({block:'start'})});
 }

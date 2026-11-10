@@ -41,7 +41,7 @@ const server = http.createServer(async(req,res)=>{
   }
   if(req.url.startsWith('/api/'))return runtime.json(res,404,{error:'API route not found. Check the server version.'});
   const incomingPath=decodeURIComponent((req.url||'/').split('?')[0]);
-  const requestPath=/^\/(?:inbox|agent|research|skills|papers|notes|folders|boards|views|experiments|repositories)(?:\/[^/]+)?\/?$/.test(incomingPath)?'/index.html':incomingPath;
+  const requestPath=/^\/(?:inbox|archive|agent|research|skills|papers|notes|folders|boards|views|experiments|repositories)(?:\/[^/]+)?\/?$/.test(incomingPath)?'/index.html':incomingPath;
   const file = path.join(root, requestPath === '/' ? 'index.html' : requestPath);
   if (!file.startsWith(root+path.sep) || /(?:^|\/)(?:data|node_modules|\.git)(?:\/|$)/.test(requestPath) || !/\.(?:html|css|js|ico|png|svg|woff2|woff|ttf)$/.test(file) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('Not found'); }
   if(path.extname(file)==='.html'){

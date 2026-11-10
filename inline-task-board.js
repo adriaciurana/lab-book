@@ -1,6 +1,7 @@
 // Live boards inside research pages; cards always use the source board's data.
 function inlineTaskBoardHTML(board,noteId){
- const tasks=state.tasks.filter(t=>t.board===board.id);
+ if(typeof lifecycleArchived==='function'&&lifecycleArchived('boards',board.id))return '<p class="muted">This task board is archived.</p>';
+ const tasks=state.tasks.filter(t=>t.board===board.id&&(typeof lifecycleArchived!=='function'||!lifecycleArchived('tasks',t.id)));
  return `<section class="inline-task-board" contenteditable="false" data-inline-board="${hubEscape(board.id)}" data-inline-note="${hubEscape(noteId||'')}"><header><strong>${hubEscape(board.name)}</strong><a href="/boards/${encodeURIComponent(board.id)}">Open full board ↗</a></header><div class="inline-board-lanes">${board.columns.map(col=>`<section class="inline-board-column" data-inline-column="${hubEscape(col)}"><header><strong>${hubEscape(col)}</strong><small>${tasks.filter(t=>t.col===col).length}</small></header>${tasks.filter(t=>t.col===col).map(t=>`<article class="task" data-task="${hubEscape(t.id)}" draggable="true" tabindex="0" role="button" aria-label="Edit ${hubEscape(t.text)}"><small>${hubEscape(t.type||'task')}</small><p>${hubEscape(t.text)}</p><span class="tag">${hubEscape(t.tag||'research')}</span></article>`).join('')}<button type="button" class="column-add-task" data-inline-add>+ Add task</button></section>`).join('')}</div></section>`;
 }
 function bindInlineTaskBoards(root){

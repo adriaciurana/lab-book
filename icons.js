@@ -53,7 +53,7 @@ function refreshIcons(){
   const folder=state.folders.find(f=>f.id===button.dataset.folder);if(!folder)return;
   putIcon(button.querySelector('.folder-icon'),iconAliases[folder.icon]||folder.icon||'folder');
   if(!button.querySelector('.folder-label')){const node=[...button.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(node){const label=document.createElement('span');label.className='folder-label';label.textContent=node.textContent;node.replaceWith(label)}}
-  const count=button.querySelector('small'),total=state.notes.filter(n=>folder.id==='inbox'||n.folder===folder.id).length;
+  const count=button.querySelector('small'),total=state.notes.filter(n=>(folder.id==='inbox'||n.folder===folder.id)&&(typeof lifecycleArchived!=='function'||!lifecycleArchived('notes',n.id))).length;
   if(count&&count.textContent!==String(total))count.textContent=total;
  });
  const inboxCount=document.querySelector('.main-nav [data-view="inbox"] i');if(inboxCount&&inboxCount.textContent!==String(state.notes.length))inboxCount.textContent=state.notes.length;

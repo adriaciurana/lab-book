@@ -2,6 +2,14 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Archive and deletion
+
+Use **⋯** beside a workspace collection, page or task, or in the current page/board controls. Papers, experiment rows, repositories, branches and combined board views also have management actions. **Archive** hides an item from active views and keeps its content and links. Archiving a collection or page also hides dependent pages, boards, tasks and experiments. Use **Archive** in the sidebar to restore it; restore an archived parent before restoring an independently archived child.
+
+**Review deletion…** lists how many records will be removed. Nothing is deleted until you click **Confirm permanent deletion**. Deleting a page preserves its children by default; deleting a collection moves its pages to Inbox. Select **Also delete contained pages** if you want those pages removed too. Board deletion removes its tasks, while other linked records are kept with invalid links cleared. Removed paper references become plain text in notes. Removing paper or repository records does not delete PDF files from disk or modify a remote Git repository. Inbox itself cannot be archived or deleted.
+
+Archive status and deletion persist in the current environment. Run `npm run test:lifecycle` for hierarchy, relationship cleanup, confirmation and restore checks.
+
 ## Detailed research documents and equations
 
 My agent writes complete explanatory documents into proposed pages, rather than section outlines. By default it develops the intuition, mechanism, mathematical formulation, worked examples, comparisons and limitations. Short explanatory proposals receive a dedicated writing pass before being presented. If that pass still produces only a stub, the request fails instead of offering it as a finished document. Explicit requests for short notes or blank templates remain brief. For an older pending outline, choose **Develop fully** in its details to replace the proposal with a complete document. This still edits only the proposal. Every addition still needs your confirmation.
