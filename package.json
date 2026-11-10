@@ -51,7 +51,8 @@
     "test:skills": "env -u ELECTRON_RUN_AS_NODE electron tests/skill-manager.cjs",
     "test:attachments": "env -u ELECTRON_RUN_AS_NODE electron tests/research-attachments.cjs",
     "test:agent": "node --test tests/agent-request.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/my-agent.cjs",
-    "test:agent-layout": "env -u ELECTRON_RUN_AS_NODE electron tests/agent-layout.cjs"
+    "test:agent-layout": "env -u ELECTRON_RUN_AS_NODE electron tests/agent-layout.cjs",
+    "test:editor-agent": "env -u ELECTRON_RUN_AS_NODE electron tests/editor-agent.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -83,7 +84,8 @@
       "node_modules/pdfjs-dist/build/*.mjs",
       "package.json",
       "research-attachments.cjs",
-      "agent-request.cjs"
+      "agent-request.cjs",
+      "editor-agent.cjs"
     ],
     "mac": {
       "category": "public.app-category.productivity"

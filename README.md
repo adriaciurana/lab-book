@@ -2,6 +2,12 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Edit notes with Agent
+
+In a note's editing toolbar, **Agent** sits beside **B**. Select a passage before clicking it to edit that selection, or choose **Whole page** to rewrite the page's text using a prompt. Review the proposed wording and explicitly choose **Apply to draft**; generating or cancelling a preview leaves the note unchanged. Applying autosaves a draft and does not publish a version.
+
+Whole-page editing preserves the existing block structure and embedded papers, diagrams, tables, links and highlight references. Selections that include protected references ask you to use whole-page mode or select only editable text. A preview cannot be applied if the page has changed since it was opened. Run `npm run test:editor-agent` for selection, confirmation, preservation and persistence checks.
+
 ## My agent: conversations and confirmed workspace changes
 
 Open **My agent** at `/agent` (existing `/research` links still work). Use **+ New chat** to start another conversation; the left-hand tab list retains independent histories, context sources and selected skills. Use **Hide tabs / Show tabs** to give the chat the full available width; this preference is remembered in your browser. On phones, the tabs become a compact horizontal strip. Histories and proposal approval states are saved on the server and survive reloads. The message field grows automatically as you type or paste, up to a comfortable viewport limit; Send stays a fixed height and aligned to the bottom. Enter sends a message; Shift+Enter inserts a new line. There is one **Send** button for questions, research and workspace proposals. Enable **Include web search** when you want online sources.
