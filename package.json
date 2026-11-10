@@ -54,7 +54,8 @@
     "test:agent-layout": "env -u ELECTRON_RUN_AS_NODE electron tests/agent-layout.cjs",
     "test:editor-agent": "env -u ELECTRON_RUN_AS_NODE electron tests/editor-agent.cjs",
     "test:rich-pages": "node --test tests/rich-pages.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/math-notes.cjs",
-    "test:lifecycle": "node --test tests/lifecycle.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/lifecycle-browser.cjs"
+    "test:lifecycle": "node --test tests/lifecycle.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/lifecycle-browser.cjs",
+    "test:send-lock": "env -u ELECTRON_RUN_AS_NODE electron tests/agent-send-lock.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
