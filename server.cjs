@@ -4,7 +4,7 @@ const path = require('path');
 const runtime=require('./runtime.cjs');
 const port = Number(process.env.PORT || (runtime.environment==='test'?4175:4173));
 const root = __dirname;
-const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon'};
+const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
 function configuredKey(){
   if(process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
   const home=process.env.HOME || '/Users/totolia';
@@ -24,6 +24,7 @@ function parseModelJson(text,filename){
 const server = http.createServer(async(req,res)=>{
   try{if(await runtime.handle(req,res))return}catch(error){if(!res.headersSent&&!res.writableEnded)runtime.json(res,400,{error:error.message});return}
   if(req.url.split('?')[0]==='/api/research-attachments'||req.url.startsWith('/api/research-attachments/'))return require('./research-attachments.cjs').handle(req,res);
+  if(req.method==='POST' && req.url==='/api/agent/develop-page')return require('./detailed-pages.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/agent/edit')return require('./editor-agent.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/search')return require('./research-search.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/diagrams/generate')return require('./diagram-service.cjs').handle(req,res,configuredKey);

@@ -12,6 +12,7 @@ function editorSnapshot(){
   [...body.children].forEach(block=>{if(!block.dataset.labBlockId)block.dataset.labBlockId=crypto.randomUUID()});
   const snapshot=body.cloneNode(true);
   // Live previews are rebuilt from their persisted source, never from an iframe.
+  snapshot.querySelectorAll('.note-math[data-latex]').forEach(node=>node.replaceChildren());
   snapshot.querySelectorAll('[data-architecture]').forEach(block=>block.replaceChildren());
   snapshot.querySelectorAll('[data-research-block]').forEach(block=>block.replaceChildren());
   [...snapshot.children].forEach((block,index)=>{if(!block.dataset.labBlockId)block.dataset.labBlockId=crypto.randomUUID()});

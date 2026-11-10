@@ -7,7 +7,7 @@
   const paperKey=url=>{const value=String(url||'');const match=value.match(/arxiv\.org\/(?:abs|pdf|html)\/(.+?)(?:\.pdf)?(?:[?#]|$)/i);return match?'arxiv:'+match[1].replace(/v\d+$/,''):value.replace(/\/$/,'')};
   const text=(v,fallback='')=>typeof v==='string'?v:fallback;
   const escape=v=>text(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function markdown(value){return text(value).split('\n').map(line=>{const h=line.match(/^(#{1,6}) (.*)/);return h?'<h'+h[1].length+'>'+escape(h[2])+'</h'+h[1].length+'>':line.startsWith('- ')?'<p>• '+escape(line.slice(2))+'</p>':'<p>'+escape(line)+'</p>'}).join('')}
+  function markdown(value){return (typeof module!=='undefined'&&module.exports?require('./rich-text.js'):root.RichText).render(value)}
   for(const key of ['notes','papers','boards','tasks','experiments','repositories','branches'])next[key]||=[];
   const order=['page','repository','paper','board','branch','task','experiment','highlight'];
   for(const kind of order)for(const a of selected.filter(a=>a.kind===kind)){

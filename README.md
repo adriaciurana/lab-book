@@ -2,6 +2,14 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Detailed research documents and equations
+
+My agent writes complete explanatory documents into proposed pages, rather than section outlines. By default it develops the intuition, mechanism, mathematical formulation, worked examples, comparisons and limitations. Short explanatory proposals receive a dedicated writing pass before being presented. If that pass still produces only a stub, the request fails instead of offering it as a finished document. Explicit requests for short notes or blank templates remain brief. For an older pending outline, choose **Develop fully** in its details to replace the proposal with a complete document. This still edits only the proposal. Every addition still needs your confirmation.
+
+Markdown headings, emphasis, lists, links, tables and code render in the chat, page previews, imported notes and saved agent pages. Use `$x^2$` or `\(x^2\)` for inline LaTeX; use `$$...$$` or `\[...\]` for display equations. Rendering uses local KaTeX assets, including fonts, with no external CDN. Raw HTML and trusted LaTeX commands are disabled.
+
+The editor's **+ → Equation / LaTeX** opens a live equation preview. Double-click an equation in edit mode to change its source. Drafts and published versions preserve the LaTeX source; rendering is rebuilt after reload. Agent rewrites protect equation blocks like other references. Run `npm run test:rich-pages` to check detailed-page completion, safe Markdown and equation persistence.
+
 ## Edit notes with Agent
 
 In a note's editing toolbar, **Agent** sits beside **B**. Select a passage before clicking it to edit that selection, or choose **Whole page** to rewrite the page's text using a prompt. Review the proposed wording and explicitly choose **Apply to draft**; generating or cancelling a preview leaves the note unchanged. Applying autosaves a draft and does not publish a version.

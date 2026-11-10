@@ -52,7 +52,8 @@
     "test:attachments": "env -u ELECTRON_RUN_AS_NODE electron tests/research-attachments.cjs",
     "test:agent": "node --test tests/agent-request.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/my-agent.cjs",
     "test:agent-layout": "env -u ELECTRON_RUN_AS_NODE electron tests/agent-layout.cjs",
-    "test:editor-agent": "env -u ELECTRON_RUN_AS_NODE electron tests/editor-agent.cjs"
+    "test:editor-agent": "env -u ELECTRON_RUN_AS_NODE electron tests/editor-agent.cjs",
+    "test:rich-pages": "node --test tests/rich-pages.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/math-notes.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -85,7 +86,9 @@
       "package.json",
       "research-attachments.cjs",
       "agent-request.cjs",
-      "editor-agent.cjs"
+      "editor-agent.cjs",
+      "detailed-pages.cjs",
+      "vendor/**/*"
     ],
     "mac": {
       "category": "public.app-category.productivity"
@@ -99,6 +102,8 @@
     }
   },
   "dependencies": {
+    "katex": "0.19.1",
+    "markdown-it": "15.0.3",
     "pdfjs-dist": "^4.10.38"
   }
 }
