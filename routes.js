@@ -12,9 +12,12 @@ function renderPublishedNote(note){
  body.querySelectorAll('[contenteditable]').forEach(el=>el.contentEditable='false');
  if(body.firstElementChild?.tagName==='H1'&&body.firstElementChild.textContent.trim()===title.textContent.trim())body.firstElementChild.remove();
  body.querySelectorAll('[data-architecture]').forEach(block=>{try{block.replaceChildren(architectureFrame(decodeURIComponent(block.dataset.architecture)))}catch{}});
- const children=document.createElement('div');children.className='page-related-links';for(const child of state.notes.filter(n=>n.parentNoteId===note.id)){const a=document.createElement('a');a.href='/notes/'+encodeURIComponent(child.id);a.textContent=child.published?.title||child.title;children.append(a)}
+ const children=document.createElement('section');children.className='page-relations';children.setAttribute('aria-label','Child pages');
+ const childHead=document.createElement('div');childHead.className='section-head';const childTitle=document.createElement('strong');childTitle.textContent='Pages';const addChild=document.createElement('button');addChild.className='text-btn';addChild.textContent='+ Add page';addChild.onclick=()=>openWorkspaceCreateMenu(note.id,addChild);childHead.append(childTitle,addChild);children.append(childHead);
+ const parent=state.notes.find(n=>n.id===note.parentNoteId);if(parent){const up=document.createElement('a');up.className='page-parent';up.href='/notes/'+encodeURIComponent(parent.id);up.textContent='← '+parent.title;children.prepend(up)}
+ const childLinks=document.createElement('div');childLinks.className='page-related-links';for(const child of state.notes.filter(n=>n.parentNoteId===note.id)){const a=document.createElement('a');a.href='/notes/'+encodeURIComponent(child.id);a.textContent=child.published?.title||child.title;childLinks.append(a)}if(!childLinks.childElementCount){const empty=document.createElement('small');empty.className='muted';empty.textContent='This page can contain other pages. Add a document or a research stream.';childLinks.append(empty)}children.append(childLinks);
  page.append(tools,title,status,children,body);document.querySelector('#content').replaceChildren(page);
- document.querySelector('#breadcrumbs').textContent=title.textContent;renderFolders();syncWorkspaceRoute('/notes/'+encodeURIComponent(note.id));
+ document.querySelector('#breadcrumbs').textContent=title.textContent;revealWorkspaceNote(note);renderFolders();syncWorkspaceRoute('/notes/'+encodeURIComponent(note.id));
  const url=new URL(location.href);if(url.searchParams.has('edit')){url.searchParams.delete('edit');history.replaceState({},'',url.pathname+url.search)}
 }
 function syncWorkspaceRoute(path,replace=false){
@@ -54,7 +57,7 @@ async function applyWorkspaceRoute(){
   document.body.classList.toggle('detached-paper-reader',new URLSearchParams(location.search).get('reader')==='1'&&location.pathname.startsWith('/papers/'));
   const parts=location.pathname.split('/').filter(Boolean).map(decodeURIComponent),section=parts[0]||(LABBOOK_ENV==='production'?'papers':'inbox'),id=parts[1];
   if(section==='notes'&&id){const note=state.notes.find(n=>n.id===id);if(!note)throw Error('This note does not exist');currentFolder=note.folder||'inbox';currentView='inbox';renderFolders();if(new URLSearchParams(location.search).get('edit')==='1')openEditor(note);else renderPublishedNote(note)}
-  else if(section==='folders'&&id){if(!state.folders.some(f=>f.id===id))throw Error('This folder does not exist');currentFolder=id;currentView='inbox';render()}
+  else if(section==='folders'&&id){const folder=state.folders.find(f=>f.id===id);if(!folder)throw Error('This folder does not exist');currentFolder=id;if(id==='inbox'){currentView='inbox';render()}else{const note=workspaceFolderPage(folder);if(note)renderPublishedNote(note)}}
   else if(section==='papers'&&id){renderPaperDetail(id)}
   else if(section==='boards'){readTaskBoardFilters();if(id&&!state.boards.some(b=>b.id===id))throw Error('This board does not exist');activeBoard=id||state.boards[0]?.id;currentView='board';render()}
   else if(section==='views'){readTaskBoardFilters();if(id&&!state.boardViews.some(v=>v.id===id))throw Error('This combined view does not exist');window.activeBoardView=id||state.boardViews[0]?.id;currentView='board-view';render()}

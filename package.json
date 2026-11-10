@@ -46,7 +46,8 @@
     "desktop:dev": "concurrently \"node server.cjs\" \"wait-on http://localhost:4173 && env -u ELECTRON_RUN_AS_NODE electron .\"",
     "package:desktop": "electron-builder",
     "test:diagram-harmonize": "node --test tests/diagram-harmonize.cjs tests/diagram-service.cjs",
-    "test:diagram-chat": "env -u ELECTRON_RUN_AS_NODE electron tests/diagram-chat.cjs"
+    "test:diagram-chat": "env -u ELECTRON_RUN_AS_NODE electron tests/diagram-chat.cjs",
+    "test:nested-pages": "env -u ELECTRON_RUN_AS_NODE electron tests/nested-pages.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

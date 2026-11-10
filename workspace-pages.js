@@ -6,24 +6,25 @@ const workspaceTemplates={
  experiment:{label:'Experiment plan',description:'Hypothesis, setup, metrics and observations.',content:'<h2>Hypothesis</h2><p><br></p><h2>Setup</h2><p>Repository, branch, dataset, machine and configuration.</p><h2>Evaluation</h2><p>Baseline, metrics and acceptance criteria.</p><h2>Observations</h2><p><br></p>'}
 };
 function closeWorkspaceMenu(){document.querySelector('#workspaceCreateMenu')?.remove();document.querySelector('#addFolderBtn').setAttribute('aria-expanded','false')}
-function openWorkspaceCreateMenu(){
+function openWorkspaceCreateMenu(parentId=null,source=null){
  if(document.querySelector('#workspaceCreateMenu'))return closeWorkspaceMenu();
  if(!flushDraft())return;
- const trigger=document.querySelector('#addFolderBtn'),menu=document.createElement('div');menu.id='workspaceCreateMenu';menu.className='workspace-create-menu';menu.setAttribute('role','menu');
+ const trigger=source||document.querySelector('#addFolderBtn'),menu=document.createElement('div');menu.id='workspaceCreateMenu';menu.className='workspace-create-menu';menu.setAttribute('role','menu');
  menu.innerHTML='<div class="eyebrow">CREATE IN WORKSPACE</div>'+Object.entries(workspaceTemplates).map(([id,t])=>`<button role="menuitem" data-page-template="${id}"><strong>${t.label}</strong><small>${t.description}</small></button>`).join('')+'<hr><button role="menuitem" data-create-folder><strong>Folder</strong><small>Organize pages into a collection.</small></button>';
  document.body.append(menu);const rect=trigger.getBoundingClientRect();menu.style.top=Math.min(rect.bottom+8,innerHeight-menu.offsetHeight-12)+'px';menu.style.left=Math.max(12,Math.min(rect.left,innerWidth-menu.offsetWidth-12))+'px';trigger.setAttribute('aria-expanded','true');
- menu.querySelectorAll('[data-page-template]').forEach(b=>b.onclick=()=>{closeWorkspaceMenu();openPageTemplate(b.dataset.pageTemplate)});
- menu.querySelector('[data-create-folder]').onclick=()=>{closeWorkspaceMenu();workspaceFolderDialog()};menu.querySelector('button').focus();
+ if(parentId){menu.querySelector('.eyebrow').textContent='ADD A CHILD PAGE';menu.querySelector('[data-create-folder]').remove();menu.querySelector('hr').remove()}
+ menu.querySelectorAll('[data-page-template]').forEach(b=>b.onclick=()=>{closeWorkspaceMenu();openPageTemplate(b.dataset.pageTemplate,parentId)});
+ const folderAction=menu.querySelector('[data-create-folder]');if(folderAction)folderAction.onclick=()=>{closeWorkspaceMenu();workspaceFolderDialog()};menu.querySelector('button').focus();
  menu.onkeydown=event=>{const buttons=[...menu.querySelectorAll('button')],index=buttons.indexOf(document.activeElement);if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;buttons[next].focus()}};
 }
 const workspaceFolderDialog=document.querySelector('#addFolderBtn').onclick;
-document.querySelector('#addFolderBtn').onclick=openWorkspaceCreateMenu;
+document.querySelector('#addFolderBtn').onclick=()=>openWorkspaceCreateMenu();
 document.querySelector('#addFolderBtn').setAttribute('aria-haspopup','menu');
-document.addEventListener('pointerdown',e=>{if(!e.target.closest('#workspaceCreateMenu,#addFolderBtn'))closeWorkspaceMenu()});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#workspaceCreateMenu,#addFolderBtn,.workspace-add-child'))closeWorkspaceMenu()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('#workspaceCreateMenu')){closeWorkspaceMenu();document.querySelector('#addFolderBtn').focus()}});
 function openPageTemplate(templateId='blank',parentId=null){
  const template=workspaceTemplates[templateId];if(!template)return;
- const parent=state.notes.find(n=>n.id===parentId);
+ const parent=state.notes.find(n=>n.id===(parentId||state.folders.find(f=>f.id===currentFolder)?.pageId));
  const dialog=composerShell('Create a page',`<p class="muted">${template.label} · This stays a normal, editable page.</p><label>Page title<input id="workspacePageTitle" placeholder="${templateId==='research'?'e.g. Improving video consistency':'Untitled page'}" /></label>${templateId==='research'?'<label class="workspace-check"><input type="checkbox" id="workspaceCreateBoard" checked> Create a linked task board</label>':''}<div class="composer-actions"><button class="btn ghost" data-composer-close>Cancel</button><button class="btn primary" id="createWorkspacePage">Create page</button></div>`);
  const input=dialog.querySelector('#workspacePageTitle');input.focus();input.onkeydown=e=>{if(e.key==='Enter')dialog.querySelector('#createWorkspacePage').click()};
  dialog.querySelector('#createWorkspacePage').onclick=()=>{
@@ -38,7 +39,7 @@ function openPageTemplate(templateId='blank',parentId=null){
  };
 }
 const workspaceEditorBefore=openEditor;
-openEditor=function(note){workspaceEditorBefore(note);if(!document.querySelector('.editor'))return;revealWorkspaceNote(currentDraftNote());renderFolders();requestAnimationFrame(()=>{const list=document.querySelector('#folderList'),link=list?.querySelector('[aria-current="page"]');if(!link)return;const bounds=list.getBoundingClientRect(),row=link.getBoundingClientRect();if(row.top<bounds.top)list.scrollTop+=row.top-bounds.top;else if(row.bottom>bounds.bottom)list.scrollTop+=row.bottom-bounds.bottom});renderPageRelations();hydrateArchitectureBlocks()};
+openEditor=function(note){const isNew=!note;workspaceEditorBefore(note);if(!document.querySelector('.editor'))return;if(isNew){const draft=currentDraftNote(),parent=state.folders.find(f=>f.id===draft?.folder)?.pageId;if(draft&&parent&&parent!==draft.id){draft.parentNoteId=parent;save()}}revealWorkspaceNote(currentDraftNote());renderFolders();requestAnimationFrame(()=>{const list=document.querySelector('#folderList'),link=list?.querySelector('[aria-current="page"]');if(!link)return;const bounds=list.getBoundingClientRect(),row=link.getBoundingClientRect();if(row.top<bounds.top)list.scrollTop+=row.top-bounds.top;else if(row.bottom>bounds.bottom)list.scrollTop+=row.bottom-bounds.bottom});renderPageRelations();hydrateArchitectureBlocks()};
 function renderPageRelations(){
  document.querySelector('#pageRelations')?.remove();const note=currentDraftNote();if(!note)return;
  const children=state.notes.filter(n=>n.parentNoteId===note.id),parent=state.notes.find(n=>n.id===note.parentNoteId),boards=state.boards.filter(b=>(note.boardIds||[]).includes(b.id)||b.noteId===note.id);
@@ -60,6 +61,24 @@ function openPageBoardPicker(embed=false){
  dialog.querySelector('#pageBoardCreate').onclick=()=>{const name=dialog.querySelector('#pageBoardName').value.trim(),columns=dialog.querySelector('#pageBoardColumns').value.split(',').map(v=>v.trim()).filter(Boolean);if(!name||!columns.length||new Set(columns).size!==columns.length)return toast('Use a board name and unique, nonempty columns');link({id:crypto.randomUUID(),name,columns,noteId:note.id},true)};
 }
 // Keep document hierarchy visible without inventing a separate stream entity.
+function workspaceFolderPage(folder){
+ let note=state.notes.find(n=>n.id===folder.pageId);if(note)return note;
+ const before=structuredClone(state.notes),old=folder.pageId;
+ note={id:crypto.randomUUID(),title:folder.name,folder:folder.id,parentNoteId:null,type:'file',tag:'draft',draft:true,versions:[],content:'<p><br></p>',boardIds:[]};state.notes.push(note);folder.pageId=note.id;
+ for(const child of state.notes)if(child.id!==note.id&&child.folder===folder.id&&!child.parentNoteId)child.parentNoteId=note.id;
+ try{save();return note}catch(error){state.notes=before;folder.pageId=old;toast(error.message);return null}
+}
+function moveWorkspacePage(id,parentId,folderId){
+ if(!flushDraft())return false;
+ const note=state.notes.find(n=>n.id===id),parent=state.notes.find(n=>n.id===parentId);if(!note||(!parent&&!state.folders.some(f=>f.id===folderId)))return false;
+ const ids=new Set([id]);let added=true;while(added){added=false;for(const n of state.notes)if(ids.has(n.parentNoteId)&&!ids.has(n.id)){ids.add(n.id);added=true}}
+ if(ids.has(parentId)){toast('A page cannot be moved inside itself or its descendants');return false}
+ if(state.folders.some(f=>f.pageId===id)){toast('Move this workspace page using its folder row');return false}
+ const before=structuredClone(state.notes);note.parentNoteId=parent?.id||null;for(const n of state.notes)if(ids.has(n.id))n.folder=parent?.folder||folderId||'inbox';
+ if(parent)workspaceTreeCollapsed['page:'+parent.id]=false;
+ try{save();render();return true}catch(error){state.notes=before;toast(error.message);return false}
+}
+window.addEventListener('dragend',()=>{if(dragged?.type==='note')dragged=null;document.querySelectorAll('.page-drop-target').forEach(el=>el.classList.remove('page-drop-target'))});
 const workspaceFoldersBefore=renderFolders;
 const workspaceTreeKey='labbook-tree-'+LABBOOK_ENV;
 let workspaceTreeCollapsed={};
@@ -79,10 +98,16 @@ renderFolders=function(){
  function row(kind,item,depth,hidden,hasChildren,element){
   const wrap=document.createElement('div');wrap.className='workspace-tree-row';wrap.dataset.treeKind=kind;wrap.dataset.treeId=item.id;wrap.hidden=hidden;wrap.style.setProperty('--tree-depth',Math.min(depth,8));
   if(hasChildren){const toggle=document.createElement('button');toggle.className='workspace-tree-toggle';toggle.dataset.treeToggle=kind+':'+item.id;toggle.setAttribute('aria-expanded',String(!workspaceIsCollapsed(kind,item.id)));toggle.setAttribute('aria-label',(workspaceIsCollapsed(kind,item.id)?'Expand ':'Collapse ')+(item.name||item.title));toggle.innerHTML='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 6 6-6 6"/></svg>';toggle.onclick=()=>{const key=kind+':'+item.id;workspaceTreeCollapsed[key]=!workspaceIsCollapsed(kind,item.id);try{localStorage.setItem(workspaceTreeKey,JSON.stringify(workspaceTreeCollapsed))}catch{}renderFolders();list.querySelector('[data-tree-toggle="'+CSS.escape(key)+'"]')?.focus({preventScroll:true})};wrap.append(toggle)}else{const spacer=document.createElement('span');spacer.className='workspace-tree-spacer';wrap.append(spacer)}
-  element.title=item.name||item.title;element.style.paddingLeft='';wrap.append(element);fragment.append(wrap);
+  element.title=item.name||item.title;element.style.paddingLeft='';wrap.append(element);
+  const add=document.createElement('button');add.className='workspace-add-child';add.textContent='+';add.title='Add child page';add.setAttribute('aria-label','Add child page to '+(item.name||item.title));add.onclick=()=>{if(!flushDraft())return;if(kind==='folder'&&item.id==='inbox'){currentFolder='inbox';openWorkspaceCreateMenu(null,add);return}const parent=kind==='page'?item:workspaceFolderPage(item);if(parent){workspaceTreeCollapsed[kind+':'+item.id]=false;openWorkspaceCreateMenu(parent.id,add)}};wrap.append(add);
+  if(kind==='page'){element.draggable=true;element.ondragstart=e=>{if(!flushDraft()){e.preventDefault();return}dragged={type:'note',id:item.id};e.dataTransfer.setData('application/x-labbook-page',item.id);e.dataTransfer.effectAllowed='move';e.stopPropagation()}}
+  wrap.addEventListener('dragover',e=>{if(dragged?.type!=='note')return;e.preventDefault();e.stopPropagation();wrap.classList.add('page-drop-target')});
+  wrap.addEventListener('dragleave',()=>wrap.classList.remove('page-drop-target'));
+  wrap.addEventListener('drop',e=>{if(dragged?.type!=='note')return;e.preventDefault();e.stopPropagation();const id=dragged.id;dragged=null;wrap.classList.remove('page-drop-target');moveWorkspacePage(id,kind==='page'?item.id:item.pageId,item.id)},true);
+  fragment.append(wrap);
  }
- function pages(parent,folder,depth,hidden){for(const note of state.notes.filter(n=>n.folder===folder&&(n.parentNoteId||null)===parent)){if(seenNotes.has(note.id))continue;seenNotes.add(note.id);const children=state.notes.some(n=>n.parentNoteId===note.id&&n.folder===folder),link=document.createElement('a');link.className='workspace-page-link';link.href='/notes/'+encodeURIComponent(note.id);const icon=document.createElement('span');icon.className='workspace-page-icon';icon.innerHTML='<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h9l5 5v13H5z M14 3v6h5 M8 13h8 M8 17h5"/></svg>';const title=document.createElement('span');title.className='workspace-page-title';title.textContent=note.title;link.append(icon,title);if(document.querySelector('.editor')?.dataset.noteId===note.id){link.setAttribute('aria-current','page');link.classList.add('is-current')}row('page',note,depth,hidden,children,link);pages(note.id,folder,depth+1,hidden||workspaceIsCollapsed('page',note.id))}}
- function folders(parent,depth,hidden){for(const folder of state.folders.filter(f=>(f.parentId||null)===parent)){if(seenFolders.has(folder.id))continue;seenFolders.add(folder.id);const button=buttons.get(folder.id);if(!button)continue;const children=state.folders.some(f=>f.parentId===folder.id)||state.notes.some(n=>n.folder===folder.id);row('folder',folder,depth,hidden,children,button);const collapsed=hidden||workspaceIsCollapsed('folder',folder.id);pages(null,folder.id,depth+1,collapsed);folders(folder.id,depth+1,collapsed)}}
+ function pages(parent,folder,depth,hidden){for(const note of state.notes.filter(n=>n.folder===folder&&(n.parentNoteId||null)===parent)){if(seenNotes.has(note.id)||state.folders.some(f=>f.pageId===note.id))continue;seenNotes.add(note.id);const children=state.notes.some(n=>n.parentNoteId===note.id&&n.folder===folder),link=document.createElement('a');link.className='workspace-page-link';link.href='/notes/'+encodeURIComponent(note.id);const icon=document.createElement('span');icon.className='workspace-page-icon';icon.innerHTML='<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h9l5 5v13H5z M14 3v6h5 M8 13h8 M8 17h5"/></svg>';const title=document.createElement('span');title.className='workspace-page-title';title.textContent=note.title;link.append(icon,title);if(document.querySelector('.editor')?.dataset.noteId===note.id){link.setAttribute('aria-current','page');link.classList.add('is-current')}row('page',note,depth,hidden,children,link);pages(note.id,folder,depth+1,hidden||workspaceIsCollapsed('page',note.id))}}
+ function folders(parent,depth,hidden){for(const folder of state.folders.filter(f=>(f.parentId||null)===parent)){if(seenFolders.has(folder.id))continue;seenFolders.add(folder.id);const button=buttons.get(folder.id);if(!button)continue;if(folder.id!=='inbox')button.onclick=()=>{if(!flushDraft())return;const note=workspaceFolderPage(folder);if(note)renderPublishedNote(note)};const children=state.folders.some(f=>f.parentId===folder.id)||state.notes.some(n=>n.folder===folder.id);row('folder',folder,depth,hidden,children,button);const collapsed=hidden||workspaceIsCollapsed('folder',folder.id);if(folder.pageId)pages(folder.pageId,folder.id,depth+1,collapsed);pages(null,folder.id,depth+1,collapsed);folders(folder.id,depth+1,collapsed)}}
  folders(null,0,false);list.replaceChildren(fragment);list.scrollTop=scroll;
 };
 document.querySelector('#blockMenu').insertAdjacentHTML('beforeend','<button class="block-option" data-block="linked-board"><span><strong>Task board</strong><small>Link a board to this page</small></span></button><button class="block-option" data-block="architecture"><span><strong>Diagram</strong><small>Visual figure editor, images and SVG</small></span></button>');

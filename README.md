@@ -2,6 +2,12 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## Pages inside pages
+
+Every workspace page can contain its own text and child pages. Use the **+** beside any sidebar page, or **+ Add page** in its published view, to create a blank document or choose a template inside it. Expand the arrow to browse children. Drag a page onto another page to nest it; its descendants move with it. Dropping onto a collection moves the entire page subtree there. Cyclic nesting is blocked.
+
+Opening an existing collection (except Inbox) creates its editable overview document once and keeps its existing pages beneath it. The overview opens in read mode; choose **Edit** to write and publish it. Inbox remains the global list. Existing content and page URLs remain intact. Run `npm run test:nested-pages` to check creation, moves and persistence.
+
 ## Scientific figure editor and AI harmonization
 
 Open a diagram in a note, or add one with **+ → Diagram**. The **Research figure · grouped representations** template demonstrates panels, patch grids, token strips, stacked layers and a role legend. Configure grid dimensions and layer/token counts in the properties panel. Use scientific roles for consistent input, frozen, trained, optional and loss colors. Shift-click to select objects, then group, align or distribute them. Moving a group moves its contents.
