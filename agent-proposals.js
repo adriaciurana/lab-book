@@ -10,7 +10,13 @@
   if(!folder&&parentId&&pending.has(parentId))folder=(state.folders||[]).find(f=>f.id==='inbox');
   if(!folder)throw Error('Choose a destination collection: "'+data.folder+'" does not exist.');return {parentNoteId:parentId,folder:folder.id};
  }
- function prepare(state,actions,chosen,uuid,resolved={}){
+ function sourcePaper(state,reference,sources={}){
+  const canonical=value=>{try{const url=new URL(value);if(url.protocol!=='https:')return null;for(const key of [...url.searchParams.keys()])if(/^utm_|^fbclid$|^gclid$/i.test(key))url.searchParams.delete(key);return url.href}catch{return null}};
+  const existing=(state.papers||[]).find(p=>p.id===reference||p.externalId===reference);if(existing)return {paper:existing};
+  const urls=[...(sources.messages||[]).filter(m=>m.role==='user').flatMap(m=>String(m.text||'').match(/https?:\/\/[^\s<>"\)]+/g)||[]),...(sources.context||[]).map(c=>c.url).filter(Boolean)];
+  const values=[...new Set(urls.map(canonical).filter(Boolean))];const tokens=String(reference).toLowerCase().split(/[^a-z0-9]+/).filter(t=>t.length>2&&!['technical','report','paper','research','pdf','arxiv'].includes(t));const direct=canonical(reference);const candidates=values.filter(url=>url===direct||(tokens.length&&tokens.every(token=>url.toLowerCase().includes(token))));if(candidates.length!==1)return null;const url=candidates[0],known=(state.papers||[]).find(p=>canonical(p.url)===url);if(known)return {paper:known};const filename=decodeURIComponent(new URL(url).pathname.split('/').pop()||reference);return {url,title:filename.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ')};
+ }
+ function prepare(state,actions,chosen,uuid,resolved={},sources={}){
   const selected=parse(actions).filter(a=>chosen.includes(a.id)),next=structuredClone(state),ids=new Map([...Object.entries(resolved),...selected.map(a=>[a.id,uuid()])]),created=[];
   const ref=id=>id?(ids.get(String(id).replace(/^proposal:/,''))||id):null;
   const paperKey=url=>{const value=String(url||'');const match=value.match(/arxiv\.org\/(?:abs|pdf|html)\/(.+?)(?:\.pdf)?(?:[?#]|$)/i);return match?'arxiv:'+match[1].replace(/v\d+$/,''):value.replace(/\/$/,'')};
@@ -33,10 +39,10 @@
   }
   // Link references only after every selected entity has been allocated.
   for(const a of selected){const d=a.data;if(a.kind==='board'&&d.noteId){const page=next.notes.find(n=>n.id===ref(d.noteId));if(page)page.boardIds=[...new Set([...(page.boardIds||[]),ref(a.id)])]}
-   const links=a.kind==='page'?(d.paperIds||[]):a.kind==='paper'&&d.noteId?[a.id]:[];const page=next.notes.find(n=>n.id===ref(a.kind==='page'?a.id:d.noteId));for(const paperId of links){const paper=next.papers.find(p=>p.id===ref(paperId));if(!paper)throw Error('Paper reference '+paperId+' is not in the bank or selected proposals. Review the unavailable reference in this page proposal.');if(!page)throw Error('Select the referenced page and paper together');page.content+='<div class="paper-embed" contenteditable="false" data-paper-id="'+escape(paper.id)+'"><strong>'+escape(paper.title)+'</strong><span>Open paper →</span></div>';page.draft=true;page.updatedAt=new Date().toISOString()}
+   const links=a.kind==='page'?(d.paperIds||[]):a.kind==='paper'&&d.noteId?[a.id]:[];const page=next.notes.find(n=>n.id===ref(a.kind==='page'?a.id:d.noteId));for(const paperId of links){let paper=next.papers.find(p=>p.id===ref(paperId));if(!paper){const source=sourcePaper(next,paperId,sources);if(source?.paper)paper=source.paper;else if(source?.url){paper={id:uuid(),externalId:paperId,title:source.title,url:source.url,tags:[],authors:'',highlights:[],metadataSource:'user-url'};next.papers.push(paper);created.push({kind:'paper',id:paper.id,collection:'papers',sourceURL:true})}}if(!page)throw Error('Select the referenced page and paper together');if(!paper){const proposed=actions.find(action=>action.kind==='paper'&&action.id===String(paperId).replace(/^proposal:/,''));if(proposed)throw Error('Select the proposed paper '+paperId+' together with its page, or remove that reference.');page.pendingPaperReferences=[...new Set([...(page.pendingPaperReferences||[]),String(paperId)])];page.content+='<p class="unresolved-paper-reference" data-missing-paper-id="'+escape(String(paperId))+'">Pending paper reference: '+escape(String(paperId))+'. This source is not in the paper bank yet.</p>';page.draft=true;continue}page.content+='<div class="paper-embed" contenteditable="false" data-paper-id="'+escape(paper.id)+'"><strong>'+escape(paper.title)+'</strong><span>Open paper →</span></div>';page.draft=true;page.updatedAt=new Date().toISOString()}
   }
   for(let pass=0;pass<selected.length;pass++)for(const a of selected.filter(a=>a.kind==='page')){const n=next.notes.find(n=>n.id===ref(a.id)),parent=next.notes.find(p=>p.id===n.parentNoteId);if(parent)n.folder=parent.folder}
   const model=typeof module!=='undefined'&&module.exports?require('./research-model.js'):root.ResearchModel;model.validate(next);return {next,created,entityIds:Object.fromEntries(ids)};
  }
- const api={kinds,parse,prepare,destination};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.AgentProposals=api;
+ const api={kinds,parse,prepare,destination,sourcePaper};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.AgentProposals=api;
 })(typeof window!=='undefined'?window:globalThis);

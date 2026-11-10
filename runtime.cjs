@@ -40,6 +40,16 @@ async function localPdf(input){
   if(!/^data:application\/pdf;base64,/i.test(input.fileData))throw Error('A PDF is required');
   pdf=Buffer.from(input.fileData.split(',')[1],'base64');
  }else{
+  let external;try{const url=new URL(input.url);if(url.protocol==='https:'&&!/(^|\.)arxiv\.org$/i.test(url.hostname))external=url}catch{}
+  if(external){
+   for(const key of [...external.searchParams.keys()])if(/^utm_|^fbclid$|^gclid$/i.test(key))external.searchParams.delete(key);
+   const index=path.join(directory,'papers','url-'+crypto.createHash('sha256').update(external.href).digest('hex')+'.json');
+   if(fs.existsSync(index))return localPdf(JSON.parse(fs.readFileSync(index,'utf8')));
+   const response=await fetch(external.href,{signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('Unable to download the PDF: HTTP '+response.status);
+   const chunks=[];let total=0;for await(const chunk of response.body){total+=chunk.length;if(total>80*1024*1024)throw Error('PDF too large');chunks.push(Buffer.from(chunk))}const bytes=Buffer.concat(chunks);
+   if(!bytes.subarray(0,1024).includes(Buffer.from('%PDF-')))throw Error('This URL did not return a PDF. Upload the PDF or provide its direct download link.');
+   const stored=await localPdf({fileData:'data:application/pdf;base64,'+bytes.toString('base64')});atomicWrite(index,JSON.stringify({fileId:stored.fileId,url:external.href}));return stored;
+  }
   const id=arxivId(input.url),index=path.join(directory,'papers','arxiv-'+id.replace('/','_')+'.json');
   if(fs.existsSync(index))return localPdf(JSON.parse(fs.readFileSync(index,'utf8')));
   const legacyFile=path.join(dataRoot,'papers',id+'.pdf');
