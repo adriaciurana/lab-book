@@ -4,7 +4,7 @@ A local workspace for research notes, papers, annotations, and tasks.
 
 ## My agent: conversations and confirmed workspace changes
 
-Open **My agent** at `/agent` (existing `/research` links still work). Use **+ New chat** to start another conversation; tabs retain independent histories, context sources and selected skills. Histories and proposal approval states are saved on the server and survive reloads. Enter sends a message; Shift+Enter inserts a new line. Web search is optional.
+Open **My agent** at `/agent` (existing `/research` links still work). Use **+ New chat** to start another conversation; the left-hand tab list retains independent histories, context sources and selected skills. On phones, it becomes a compact horizontal strip. Histories and proposal approval states are saved on the server and survive reloads. The message field grows automatically as you type or paste, up to a comfortable viewport limit; Send stays a fixed height and aligned to the bottom. Enter sends a message; Shift+Enter inserts a new line. Web search is optional.
 
 The agent can propose draft pages inside existing pages, paper imports and page references, exact PDF highlights linked to notes, boards, epics/tasks/subtasks, repositories/branches, and planned experiments or ablations. Each response lists its proposed additions separately. **Nothing in a proposal is added automatically.** Select the items you want, inspect their content and destination, then explicitly choose **Apply selected**. Discarding leaves the workspace entities unchanged. Actions already applied cannot be applied again; remaining actions can reference earlier accepted ones from the same proposal.
 
@@ -20,7 +20,7 @@ Files are stored under `data/<environment>/attachments/`; context saves only ref
 
 ## Workspace skills
 
-The research assistant shows the selected skill's description and offers **Edit skill**, **Duplicate**, and **+ New skill**. The Skills library provides the same actions. Define a name, description, category and instructions; the instructions are sent to the assistant with your question. Duplicates have independent IDs. Editing a bundled mode creates a workspace override without modifying its installed agent files. Definitions are saved on the server separately in each environment and survive reloads. Run `npm run test:skills` to verify the editor and persistence without making paid API calls.
+The research assistant shows the selected skill's description. Create, edit and duplicate skills only in **Skills library**, keeping these management controls out of the chat. Define a name, description, category and instructions; the instructions are sent to the assistant with your question. Duplicates have independent IDs. Editing a bundled mode creates a workspace override without modifying its installed agent files. Definitions are saved on the server separately in each environment and survive reloads. Run `npm run test:skills` to verify the editor and persistence without making paid API calls.
 
 ## Pages inside pages
 

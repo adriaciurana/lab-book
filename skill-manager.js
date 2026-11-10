@@ -14,7 +14,7 @@
  const contextBefore=renderContextUI;
  renderContextUI=function(){sync();contextBefore();const select=document.querySelector('#activeSkill');if(!select)return;const current=selected||select.value;select.replaceChildren(new Option('No skill selected',''),...skills.map(s=>new Option(s[1],s[0])));select.value=skills.some(s=>s[0]===current)?current:'';
   let details=document.querySelector('#selectedSkillDetails');if(!details){details=document.createElement('section');details.id='selectedSkillDetails';details.className='selected-skill-details';select.closest('.skill-launcher').after(details)}
-  function draw(){selected=select.value;const s=skills.find(s=>s[0]===selected);details.replaceChildren();const description=document.createElement('p');description.className='muted';description.textContent=s?s[4]:'Choose a skill to guide the assistant, or create your own.';details.append(description);const actions=document.createElement('div');actions.className='skill-actions';for(const [text,fn] of [...(s?[['Edit skill',()=>editor(s[0])],['Duplicate',()=>editor(s[0],true)]]:[]),['+ New skill',()=>editor()]]){const b=document.createElement('button');b.className='text-btn';b.textContent=text;b.onclick=fn;actions.append(b)}details.append(actions)}select.onchange=draw;draw();
+  function draw(){selected=select.value;const s=skills.find(s=>s[0]===selected);details.replaceChildren();const description=document.createElement('p');description.className='muted';description.textContent=s?s[4]:'Choose a skill to guide the assistant.';details.append(description);}select.onchange=draw;draw();
  };
  const searchBefore=renderSearch;
  renderSearch=function(){sync();const result=searchBefore();renderContextUI();return result};
