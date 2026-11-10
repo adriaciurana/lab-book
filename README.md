@@ -2,6 +2,16 @@
 
 A local workspace for research notes, papers, annotations, and tasks.
 
+## My agent: conversations and confirmed workspace changes
+
+Open **My agent** at `/agent` (existing `/research` links still work). Use **+ New chat** to start another conversation; tabs retain independent histories, context sources and selected skills. Histories and proposal approval states are saved on the server and survive reloads. Enter sends a message; Shift+Enter inserts a new line. Web search is optional.
+
+The agent can propose draft pages inside existing pages, paper imports and page references, exact PDF highlights linked to notes, boards, epics/tasks/subtasks, repositories/branches, and planned experiments or ablations. Each response lists its proposed additions separately. **Nothing in a proposal is added automatically.** Select the items you want, inspect their content and destination, then explicitly choose **Apply selected**. Discarding leaves the workspace entities unchanged. Actions already applied cannot be applied again; remaining actions can reference earlier accepted ones from the same proposal.
+
+Related changes must have valid dependencies: a task needs a selected or existing board, for example. Selected changes are validated together and saved once. Paper PDFs are copied locally after acceptance; a selected PDF attachment can also become a bank paper. Proposed highlights must match a literal passage in the actual PDF; their positions are computed from the PDF text and linked into the selected note. Failed downloads, unmatched quotes, missing dependencies or concurrent workspace changes stop that selection from being committed. New pages remain drafts until manually published. No training is launched, no Git branches are created remotely, and no repositories are modified by these records.
+
+Run `npm run test:agent` to check structured proposals, confirmation, partial acceptance, local PDF highlights, linked records, chat isolation and persistence. Model responses are simulated; tests do not spend OpenAI credits.
+
 ## Images and documents in research context
 
 Use **Attach images or documents**, drop files onto the Research context panel, or paste clipboard images/files while focused inside it. Ordinary text paste continues to work in the question field. Supported formats: PNG, JPEG, WebP, GIF, PDF, DOCX, PPTX, XLSX, TXT, Markdown, CSV and JSON. Attach up to 10 files, 5 MB each and 20 MB combined. Cards show image previews, filenames, an open/download link and a remove action.
