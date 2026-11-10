@@ -28,3 +28,5 @@
 .workspace-tree-toggle:focus-visible,.workspace-page-link:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 @media(max-height:620px){.sidebar{overflow-y:auto}.sidebar #folderList{flex:0 0 auto;max-height:none;overflow:visible;min-height:0}.sidebar>.sidebar-bottom{margin-top:auto}}
 @media(prefers-reduced-motion:reduce){.workspace-tree-toggle svg{transition:none}}
+@media(min-width:701px){.app-shell>.sidebar{position:relative;width:var(--workspace-sidebar-width,260px);flex:0 0 var(--workspace-sidebar-width,260px)}.sidebar-resize-edge{position:absolute;top:0;right:0;bottom:0;width:8px;z-index:10;cursor:col-resize;touch-action:none;outline:none}.sidebar-resize-edge::after{content:'';position:absolute;top:0;bottom:0;right:0;width:2px;background:transparent;transition:background .12s}.sidebar-resize-edge:hover::after,.sidebar-resize-edge:focus-visible::after,body.resizing-sidebar .sidebar-resize-edge::after{background:var(--accent)}body.resizing-sidebar,body.resizing-sidebar *{cursor:col-resize!important;user-select:none!important}}
+@media(max-width:700px){.sidebar-resize-edge{display:none}}

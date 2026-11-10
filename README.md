@@ -79,6 +79,8 @@ Production displays REAL and opens the paper library by default. Its initial cur
 
 ## Appearance
 
+Drag the right edge of the navigation sidebar to resize it on desktop. The browser remembers its width. Double-click the edge to reset it, or focus it and use the arrow keys. The phone navigation drawer keeps its own responsive width.
+
 Both light and dark modes use the same semantic color palette across navigation, forms, the editor, task boards, and the paper reader. The theme preference is stored in this browser. Interface icons are local SVGs that inherit theme colors; folder icons and colors can be chosen in the folder dialog. Sidebar counts reflect actual notes.
 
 The one-time production cleanup moves the complete previous environment to data/backups/production-before-cleanup-<timestamp> before activating the curated dataset. The exact backup path and removal counts are recorded in data/production/cleanup-report.json. Nothing is cleaned automatically on startup.
