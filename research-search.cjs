@@ -22,7 +22,7 @@ async function handle(req,res,getKey,{fetchImpl=fetch}={}){
   if(!key){send(503,{error:'OPENAI_API_KEY is not configured on the server'});return}
   const response=await fetchImpl('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify(request),signal:AbortSignal.timeout(120000)});
   const raw=await response.text();let data;try{data=JSON.parse(raw)}catch{throw Error('OpenAI returned an unreadable response')}
-  if(response.ok&&request.text){const text=data.output_text||data.output?.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('');let plan;try{plan=JSON.parse(text)}catch{throw Error('The agent returned an incomplete proposal. Try a smaller request.')}require('./agent-proposals.js').parse(plan.actions);if(typeof plan.answer!=='string')throw Error('Missing agent answer');data.output_text=plan.answer;data.workspaceProposal=plan;}
+  if(response.ok&&request.text){if(data.status==='incomplete')throw Error('The agent response was cut short. Retry with a smaller request; no changes were applied.');const text=data.output_text||data.output?.flatMap(o=>o.content||[]).filter(c=>c.type==='output_text').map(c=>c.text).join('');let plan;try{plan=JSON.parse(text)}catch{throw Error('The agent returned an incomplete proposal. Try a smaller request.')}plan.actions=require('./agent-proposals.js').parse(plan.actions).map(({dataJson,...action})=>action);if(typeof plan.answer!=='string')throw Error('Missing agent answer');data.output_text=plan.answer;data.workspaceProposal=plan;}
   send(response.status,data);
  }catch(error){send(400,{error:error.message})}
 }
