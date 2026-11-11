@@ -5,7 +5,7 @@ function renderPublishedNote(note){
  currentFolder=note.folder||'inbox';currentView='note';
  const published=note.published||note.versions?.at(-1)||(note.draft?null:{title:note.title,content:note.content});
  const page=document.createElement('article');page.className='editor note-reader';page.dataset.noteId=note.id;
- const tools=document.createElement('div');tools.className='editor-tools';const edit=document.createElement('button');edit.className='btn primary';edit.id='editPublishedNote';edit.textContent='Edit';edit.onclick=()=>openEditor(state.notes.find(n=>n.id===note.id));tools.append(edit);
+ const tools=document.createElement('div');tools.className='editor-tools';const edit=document.createElement('button');edit.className='btn primary';edit.id='editPublishedNote';edit.textContent='Edit';edit.onclick=()=>openEditor(state.notes.find(n=>n.id===note.id));tools.append(edit);const ask=document.createElement('button');ask.id='askAboutPage';ask.className='btn ghost';ask.textContent='Ask about page';ask.onclick=()=>window.startPageConversation(note,published||note);tools.append(ask);
  const title=document.createElement('h1');title.className='page-title';title.textContent=published?.title||note.title;
  const status=document.createElement('p');status.className='muted';status.textContent=published?'Published version':'This page has not been published yet. Open Edit to continue your draft.';
  const body=document.createElement('div');body.className='editor-body';body.contentEditable='false';body.innerHTML=published?.content||'';

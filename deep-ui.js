@@ -14,7 +14,7 @@ function normalizeResearchSelections(){
 }
 function noteBlocks(note){
  const root=document.createElement('div');root.innerHTML=note.content||'';
- root.querySelectorAll('.paper-embed,script,style').forEach(n=>n.remove());
+ root.querySelectorAll('.paper-embed,script,style').forEach(n=>n.remove());root.querySelectorAll('.note-math[data-latex]').forEach(n=>{try{n.replaceWith(document.createTextNode('$'+decodeURIComponent(n.dataset.latex)+'$'))}catch{}});
  const nodes=[...root.querySelectorAll('p,h1,h2,h3,h4,h5,h6,blockquote,li,td,th')];
  const blocks=nodes.filter(n=>!n.querySelector('p,blockquote,li,td,th')).map(n=>n.textContent.trim()).filter(Boolean);
  return blocks.length?blocks:note.desc?[note.desc]:[];
@@ -139,7 +139,7 @@ async function resolveResearchContext(){
   const source={...selected};
   if(source.type==='note'){
    const note=state.notes.find(n=>n.id===source.noteId);if(!note)throw Error('A selected note no longer exists. Remove it from context.');
-   source.label=note.title;source.text=noteBlocks(note).join('\n\n');
+   if(!source.snapshot){source.label=note.title;source.text=noteBlocks(note).join('\n\n');}
   }else if(source.type==='paragraph'){
    if(!state.notes.some(n=>n.id===source.noteId))throw Error('The note for a selected paragraph no longer exists.');
    // Keep the exact passage the user selected, even if other paragraphs are reordered.

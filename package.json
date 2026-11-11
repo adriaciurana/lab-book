@@ -58,7 +58,8 @@
     "test:send-lock": "env -u ELECTRON_RUN_AS_NODE electron tests/agent-send-lock.cjs",
     "test:sidebar-resize": "env -u ELECTRON_RUN_AS_NODE electron tests/sidebar-resize.cjs",
     "test:proposal-destinations": "node --test tests/proposal-destinations.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/proposal-destination-ui.cjs",
-    "test:source-import": "node --test tests/external-pdf.cjs tests/proposal-destinations.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/source-pdf-import.cjs"
+    "test:source-import": "node --test tests/external-pdf.cjs tests/proposal-destinations.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/source-pdf-import.cjs",
+    "test:page-questions": "env -u ELECTRON_RUN_AS_NODE electron tests/page-questions.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
