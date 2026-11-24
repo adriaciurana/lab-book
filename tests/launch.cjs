@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {EventEmitter}=require('node:events');
-const {load}=require('../launch-config.cjs');
+const {load,create}=require('../launch-config.cjs');
 const {start}=require('../scripts/server-scheduler.cjs');
 test('registered environments validate URLs and keep labels',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-launch-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));const file=path.join(dir,'config.json');
@@ -19,4 +19,16 @@ test('scheduler requires opt-in, prevents overlap, retries failure, and marks on
  child.emit('exit',1);await scheduler.tick();assert.equal(calls,1);assert.equal(JSON.parse(fs.readFileSync(file)).lastRunAt,undefined);
  fs.writeFileSync(file,JSON.stringify({enabled:true,intervalDays:3}));await scheduler.tick();child.emit('exit',0);await scheduler.tick();assert.equal(calls,2);assert.ok(JSON.parse(fs.readFileSync(file)).lastRunAt);
  server.emit('close');
+});
+
+test('creating environments preserves config and rejects duplicates and unsafe URLs',t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-create-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));const file=path.join(dir,'config.json');
+ fs.writeFileSync(file,JSON.stringify({custom:true,environments:[]}));
+ const entry=create({name:' Research ',url:'http://localhost:4180'},file);
+ assert.equal(entry.name,'Research');assert.equal(load(file).custom,true);assert.equal(load(file).environments.length,1);
+ assert.throws(()=>create({name:'research',url:'http://localhost:4190'},file));
+ assert.throws(()=>create({name:'Other',url:'http://localhost:4180/'},file));
+ assert.throws(()=>create({name:'Other',url:'javascript:alert(1)'},file));
+ assert.throws(()=>create({name:' ',url:'http://localhost:4190'},file));
+ assert.equal(load(file).environments.length,1);
 });

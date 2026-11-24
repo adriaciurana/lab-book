@@ -80,3 +80,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .environment-label.test{background:#ffd778;color:#302808;border-color:#ffd778}
 
 .top-actions{position:relative}.environment-label{cursor:pointer;background:transparent;font:inherit}.environment-menu{position:absolute;right:0;top:100%;z-index:200;background:var(--bg,#fbfaf7);color:var(--text,#182a22);border:1px solid #809088;border-radius:10px;padding:12px;min-width:180px;box-shadow:0 8px 24px #0003}.environment-menu a,.environment-menu button{display:block;padding:8px;color:inherit}
+
+.environment-form{min-width:280px;max-width:340px}.environment-form label{display:block;margin:10px 0}.environment-form input{display:block;width:100%;box-sizing:border-box;margin-top:5px}.environment-form p{font-size:13px;white-space:normal}.environment-menu [hidden]{display:none}

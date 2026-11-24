@@ -37,7 +37,7 @@ See the [full user guide](docs/user-guide.md) for editing, paper management and 
 
 ## Switch environments
 
-The installer creates `labbook.config.json` from [the example](labbook.config.example.json). Register named HTTP(S) addresses there, then click **REAL** or **TEST** in the top bar to choose one. The destination server must already be running. Navigation opens the destination home page; it never copies workspace data. For a desktop destination, register `http://localhost:4174`.
+The installer creates `labbook.config.json` from [the example](labbook.config.example.json). Click **REAL** or **TEST** in the top bar, then **Create environment** to register a name and HTTP(S) server URL. You can also edit the configuration file directly. Saved environments appear immediately in the menu. The destination server must already be running. Navigation opens the destination home page; it never copies workspace data. For a desktop destination, register `http://localhost:4174`.
 
 Production and TEST use separate directories under `data/production` and `data/test`. Set `LABBOOK_DATA_DIR` to move the data root. Packaged desktop builds use Electron's user data directory. Back up the entire data root, including attachments and PDFs. Data and local configuration are excluded from Git.
 

@@ -69,6 +69,29 @@ if(!isolatedWorkspace){
         const link=document.createElement('a');link.href=url.href;link.textContent=entry.name;menu.append(link);
       }
       if(!menu.children.length)menu.textContent='No environments registered in labbook.config.json';
+      const create=document.createElement('button');create.type='button';create.textContent='Create environment';create.className='create-environment';menu.append(create);
+      create.onclick=()=>{
+        if(menu.querySelector('form'))return;
+        const form=document.createElement('form');form.className='environment-form';
+        const nameLabel=document.createElement('label');nameLabel.textContent='Environment name';
+        const name=document.createElement('input');name.name='name';name.required=true;name.maxLength=80;name.placeholder='e.g. Research';nameLabel.append(name);
+        const urlLabel=document.createElement('label');urlLabel.textContent='Server URL';
+        const url=document.createElement('input');url.name='url';url.type='url';url.required=true;url.placeholder='http://localhost:4180';urlLabel.append(url);
+        const help=document.createElement('p');help.textContent='Register an existing Lab Book server. Start the destination server separately.';
+        const error=document.createElement('p');error.setAttribute('role','alert');
+        const submit=document.createElement('button');submit.type='submit';submit.textContent='Save environment';
+        const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.onclick=()=>{form.remove();create.hidden=false;create.focus()};
+        form.append(nameLabel,urlLabel,help,error,submit,cancel);create.after(form);create.hidden=true;name.focus();
+        form.onsubmit=async event=>{
+          event.preventDefault();submit.disabled=true;error.textContent='';
+          try{
+            const response=await fetch('/api/environments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name.value,url:url.value})});
+            const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to create environment');
+            const link=document.createElement('a');link.href=result.url;link.textContent=result.name;menu.insertBefore(link,create);
+            form.remove();create.hidden=false;link.focus();
+          }catch(problem){error.textContent=problem.message;submit.disabled=false}
+        };
+      };
       const dismiss=document.createElement('button');dismiss.textContent='Close';dismiss.onclick=close;menu.append(dismiss);
       menu.addEventListener('keydown',event=>{if(event.key==='Escape'){close();badge.focus()}});
       badge.after(menu);menu.querySelector('a,button')?.focus();

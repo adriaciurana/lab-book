@@ -91,6 +91,7 @@ async function handle(req,res){
   res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});
   res.end('window.LABBOOK_ENV='+JSON.stringify(environment)+';window.LABBOOK_STATE_REVISION='+JSON.stringify(stateRevision())+';window.LABBOOK_SERVER_STATE='+JSON.stringify(stored)+';');return true;
  }
+ if(url.pathname==='/api/environments'&&req.method==='POST'){const input=await readBody(req,10000);json(res,201,require('./launch-config.cjs').create(input));return true}
  if(url.pathname==='/api/environments'&&req.method==='GET'){json(res,200,require('./launch-config.cjs').load().environments);return true}
  if(url.pathname==='/api/health'){json(res,200,{environment,storage:'server',version:2});return true}
  if(url.pathname==='/api/sota-review/config'){

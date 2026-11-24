@@ -10,4 +10,17 @@ function load(file=process.env.LABBOOK_CONFIG||path.join(__dirname,'labbook.conf
  });
  return {...input,environments};
 }
-module.exports={load};
+function create(input,file=process.env.LABBOOK_CONFIG||path.join(__dirname,'labbook.config.json')){
+ const name=String(input.name||'').trim();
+ if(!name||name.length>80)throw Error('Enter an environment name (up to 80 characters)');
+ const url=new URL(input.url);
+ if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Use an HTTP(S) URL without credentials');
+ const config=load(file);
+ if(config.environments.some(item=>item.name.toLowerCase()===name.toLowerCase()||item.url===url.href))throw Error('An environment with this name or URL already exists');
+ const entry={name,url:url.href};config.environments.push(entry);
+ fs.mkdirSync(path.dirname(file),{recursive:true});
+ const temporary=file+'.tmp';
+ try{fs.writeFileSync(temporary,JSON.stringify(config,null,2)+'\n',{mode:0o600});fs.renameSync(temporary,file)}finally{fs.rmSync(temporary,{force:true})}
+ return entry;
+}
+module.exports={load,create};
