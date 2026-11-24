@@ -55,7 +55,23 @@ if(!isolatedWorkspace){
   render();
 }
 {
-  const badge=document.createElement('span');badge.textContent=LABBOOK_ENV==='test'?'TEST':'REAL';
+  const badge=document.createElement('button');badge.type='button';badge.title='Switch environment';badge.setAttribute('aria-label','Switch environment');badge.textContent=LABBOOK_ENV==='test'?'TEST':'REAL';
   badge.className='environment-label'+(LABBOOK_ENV==='test'?' test':'');
   document.querySelector('.top-actions').prepend(badge);
+  badge.addEventListener('click',async()=>{
+    const existing=document.querySelector('.environment-menu');if(existing){existing.remove();return}
+    try{
+      const response=await fetch('/api/environments');if(!response.ok)throw Error('Cannot load registered environments');
+      const entries=await response.json(),menu=document.createElement('div');menu.className='environment-menu';
+      const close=()=>menu.remove();
+      for(const entry of entries){
+        const url=new URL(entry.url);if(!['http:','https:'].includes(url.protocol))continue;
+        const link=document.createElement('a');link.href=url.href;link.textContent=entry.name;menu.append(link);
+      }
+      if(!menu.children.length)menu.textContent='No environments registered in labbook.config.json';
+      const dismiss=document.createElement('button');dismiss.textContent='Close';dismiss.onclick=close;menu.append(dismiss);
+      menu.addEventListener('keydown',event=>{if(event.key==='Escape'){close();badge.focus()}});
+      badge.after(menu);menu.querySelector('a,button')?.focus();
+    }catch(error){document.querySelector('#saveStatus').textContent=error.message}
+  });
 }

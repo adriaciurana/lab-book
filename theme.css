@@ -78,3 +78,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .color-picker button.selected:after{content:'';position:absolute;inset:4px;border:2px solid #17221e;border-radius:50%}
 .environment-label{font:10px 'DM Mono';padding:5px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}
 .environment-label.test{background:#ffd778;color:#302808;border-color:#ffd778}
+
+.top-actions{position:relative}.environment-label{cursor:pointer;background:transparent;font:inherit}.environment-menu{position:absolute;right:0;top:100%;z-index:200;background:var(--bg,#fbfaf7);color:var(--text,#182a22);border:1px solid #809088;border-radius:10px;padding:12px;min-width:180px;box-shadow:0 8px 24px #0003}.environment-menu a,.environment-menu button{display:block;padding:8px;color:inherit}

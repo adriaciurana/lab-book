@@ -7,7 +7,7 @@ const root = __dirname;
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf'};
 function configuredKey(){
   if(process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
-  const home=process.env.HOME || '/Users/totolia';
+  const home=require('node:os').homedir();
   const files=['.zprofile','.zshrc','.bashrc','.bash_profile','.profile'];
   for(const name of files){try{const text=fs.readFileSync(path.join(home,name),'utf8');const match=text.match(/(?:export\s+)?(?:OPENAI_API_KEY|OPENAI_KEY)\s*=\s*["']?([^\s"']+)/);if(match?.[1])return match[1]}catch{}}
   return '';
@@ -55,6 +55,7 @@ const server = http.createServer(async(req,res)=>{
   res.writeHead(200, {'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache'});
   fs.createReadStream(file).pipe(res);
 });
+server.once('listening',()=>require('./scripts/server-scheduler.cjs').start(server,runtime));
 server.on('error',error=>{if(error.code==='EADDRINUSE'){console.error(`Port ${port} is already in use. Open http://localhost:${port} or stop the existing server.`);process.exitCode=1}else throw error});
 if(require.main===module)server.listen(port, process.env.HOST||'127.0.0.1', ()=>console.log(`Lab Book [${runtime.environment}] running at http://${process.env.HOST||'localhost'}:${server.address().port}`));
 module.exports=server;

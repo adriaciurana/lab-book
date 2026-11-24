@@ -59,7 +59,10 @@
     "test:sidebar-resize": "env -u ELECTRON_RUN_AS_NODE electron tests/sidebar-resize.cjs",
     "test:proposal-destinations": "node --test tests/proposal-destinations.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/proposal-destination-ui.cjs",
     "test:source-import": "node --test tests/external-pdf.cjs tests/proposal-destinations.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/source-pdf-import.cjs",
-    "test:page-questions": "env -u ELECTRON_RUN_AS_NODE electron tests/page-questions.cjs"
+    "test:page-questions": "env -u ELECTRON_RUN_AS_NODE electron tests/page-questions.cjs",
+    "test": "node --test tests/runtime.cjs tests/research-api.cjs tests/table-schema.cjs tests/lifecycle.cjs tests/launch.cjs",
+    "test:coverage": "node --experimental-test-coverage --test tests/runtime.cjs tests/research-api.cjs tests/table-schema.cjs tests/lifecycle.cjs tests/launch.cjs",
+    "test:environments": "env -u ELECTRON_RUN_AS_NODE electron tests/environment-picker.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -94,7 +97,9 @@
       "agent-request.cjs",
       "editor-agent.cjs",
       "detailed-pages.cjs",
-      "vendor/**/*"
+      "vendor/**/*",
+      "*.cjs",
+      "scripts/**/*"
     ],
     "mac": {
       "category": "public.app-category.productivity"
@@ -111,5 +116,8 @@
     "katex": "0.19.1",
     "markdown-it": "15.0.3",
     "pdfjs-dist": "^4.10.38"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/Users/totolia/lab-book
-ExecStart=/usr/bin/env node /Users/totolia/lab-book/server.cjs
+WorkingDirectory=%h/lab-book
+ExecStart=/usr/bin/env node %h/lab-book/server.cjs
 Restart=on-failure
 Environment=NODE_ENV=production
 Environment=PORT=4173

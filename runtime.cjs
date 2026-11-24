@@ -91,15 +91,16 @@ async function handle(req,res){
   res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});
   res.end('window.LABBOOK_ENV='+JSON.stringify(environment)+';window.LABBOOK_STATE_REVISION='+JSON.stringify(stateRevision())+';window.LABBOOK_SERVER_STATE='+JSON.stringify(stored)+';');return true;
  }
+ if(url.pathname==='/api/environments'&&req.method==='GET'){json(res,200,require('./launch-config.cjs').load().environments);return true}
  if(url.pathname==='/api/health'){json(res,200,{environment,storage:'server',version:2});return true}
  if(url.pathname==='/api/sota-review/config'){
-  const configFile=path.join(directory,'sota-review-config.json'),defaults={enabled:true,intervalDays:3,model:'gpt-4.1-mini',environment};
+  const configFile=path.join(directory,'sota-review-config.json'),defaults={enabled:false,intervalDays:3,model:'gpt-4.1-mini',environment};
   if(req.method==='GET'){json(res,200,fs.existsSync(configFile)?{...defaults,...JSON.parse(fs.readFileSync(configFile,'utf8'))}:defaults);return true}
   if(req.method==='PUT'){const value=await readBody(req,100000),next={...defaults,...value};if(!Number.isInteger(Number(next.intervalDays))||Number(next.intervalDays)<1||Number(next.intervalDays)>365)throw Error('intervalDays must be between 1 and 365');if(!/^[-\w.]+$/.test(String(next.model)))throw Error('Invalid model name');atomicWrite(configFile,JSON.stringify({...next,intervalDays:Number(next.intervalDays)},null,2));json(res,200,next);return true}
   json(res,405,{error:'Method not allowed'});return true;
  }
  if(url.pathname==='/api/sota-review/run'&&req.method==='POST'){
-  const {spawn}=require('node:child_process');const configFile=path.join(directory,'sota-review-config.json');const saved=fs.existsSync(configFile)?JSON.parse(fs.readFileSync(configFile,'utf8')):{};const child=spawn(process.execPath,[path.join(__dirname,'scripts','sota-review.cjs'),...(environment==='test'?['--test']:[])],{cwd:__dirname,env:{...process.env,LABBOOK_SOTA_MODEL:saved.model||'gpt-4.1-mini'},detached:true,stdio:'ignore'});child.unref();json(res,202,{started:true,environment});return true;
+  const {spawn}=require('node:child_process');const configFile=path.join(directory,'sota-review-config.json');const saved=fs.existsSync(configFile)?JSON.parse(fs.readFileSync(configFile,'utf8')):{};const child=spawn(process.execPath,[path.join(__dirname,'scripts','sota-review.cjs'),...(environment==='test'?['--test']:[])],{cwd:__dirname,env:{...process.env,ELECTRON_RUN_AS_NODE:'1',LABBOOK_SOTA_URL:`http://127.0.0.1:${req.socket.localPort}`,LABBOOK_DATA_DIR:dataRoot,LABBOOK_SOTA_MODEL:saved.model||'gpt-4.1-mini'},detached:true,stdio:'ignore'});child.unref();json(res,202,{started:true,environment});return true;
  }
  if(url.pathname==='/api/research-gc'&&req.method==='POST'){
   const input=await readBody(req,200000), state=fs.existsSync(stateFile)?JSON.parse(fs.readFileSync(stateFile,'utf8')):{};

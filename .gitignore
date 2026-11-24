@@ -220,3 +220,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local launcher settings and generated reports
+labbook.config.json
+coverage/
+.DS_Store
