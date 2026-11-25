@@ -62,7 +62,8 @@
     "test:page-questions": "env -u ELECTRON_RUN_AS_NODE electron tests/page-questions.cjs",
     "test": "node --test tests/runtime.cjs tests/research-api.cjs tests/table-schema.cjs tests/lifecycle.cjs tests/launch.cjs tests/source-layout.cjs",
     "test:coverage": "node --experimental-test-coverage --test tests/runtime.cjs tests/research-api.cjs tests/table-schema.cjs tests/lifecycle.cjs tests/launch.cjs tests/source-layout.cjs",
-    "test:environments": "env -u ELECTRON_RUN_AS_NODE electron tests/environment-picker.cjs"
+    "test:environments": "env -u ELECTRON_RUN_AS_NODE electron tests/environment-picker.cjs",
+    "screenshots": "env -u ELECTRON_RUN_AS_NODE electron scripts/capture-screenshots.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

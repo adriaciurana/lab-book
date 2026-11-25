@@ -4,6 +4,68 @@
 
 A local research workspace that connects papers, annotated PDFs, nested notes, task boards and experiments. Use it in your browser or as an Electron desktop app. Your workspace stays in local files; optional AI features send selected context to OpenAI.
 
+## See the workflow
+
+These are screenshots of the real app using fictional demo data. Scores, papers, machines and repository branches shown here are examples, not measured research results.
+
+![Research workspace with linked pages and a clickable architecture diagram](docs/images/screenshots/research-workspace.png)
+
+*Start with a research page. Connect the question, supporting papers, experiment plans and related work through navigable pages and diagrams.*
+
+<table>
+<tr>
+<td width="50%">
+
+### Read evidence beside your notes
+
+[![PDF reader beside an editable research page, with a highlighted passage](docs/images/screenshots/paper-annotations.png)](docs/images/screenshots/paper-annotations.png)
+
+Open a paper beside your draft, highlight a passage and link that evidence back to a note.
+
+</td>
+<td width="50%">
+
+### Turn a plan into tasks
+
+[![Combined Kanban board showing research tasks across workflow stages](docs/images/screenshots/task-boards.png)](docs/images/screenshots/task-boards.png)
+
+Track epics, tasks and subtasks. Combined views bring several boards together without duplicating their tasks.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### Compare experiments
+
+[![Experiment table with typed metrics, training states and linked research context](docs/images/screenshots/experiment-results.png)](docs/images/screenshots/experiment-results.png)
+
+Compare baselines and ablations, inspect run states and keep metrics connected to their research page and code branch.
+
+</td>
+<td width="50%">
+
+### Keep code in context
+
+[![Dark theme repository view with branch relationships, pull request states and training runs](docs/images/screenshots/repository-branches.png)](docs/images/screenshots/repository-branches.png)
+
+Record branch relationships, pull request states and linked runs. Repository records describe your work; they do not execute Git operations.
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><strong>Switch between registered environments</strong></summary>
+
+![Environment menu with REAL and TEST destinations and the Create environment form](docs/images/screenshots/environment-switching.png)
+
+Click **REAL** or **TEST**, then choose a destination or **Create environment** to register another server by name and URL.
+
+</details>
+
+Click any gallery image to inspect it at full resolution. To regenerate the screenshots with a temporary demo workspace, run `npm run screenshots`. No personal workspace data or paid AI requests are used. See [the capture guide](docs/screenshots.md).
+
 ## Get started
 
 Requires **Node.js 22+**, npm and macOS or Linux for the shell launchers. Windows users can use the npm commands directly.
