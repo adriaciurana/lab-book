@@ -8,6 +8,16 @@ app.whenReady().then(async()=>{
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,120));
    openEditor();const noteId=activeNoteId;openArchitectureComposer();
+   const svgDraft=document.querySelector('#architectureMarkup').value;
+   document.querySelector('.diagram-source-mode').click();
+   const sourceInput=document.querySelector('#architectureMarkup');
+   sourceInput.value='flowchart LR\\n  A[Input] --> B[Encoder]';sourceInput.dispatchEvent(new Event('input'));
+   assert(document.querySelector('#architecturePreview iframe'),'Mermaid preview missing');
+   assert(document.querySelector('#diagramApplySource').textContent==='Apply flowchart to canvas','Wrong Mermaid action');
+   document.querySelector('#diagramSourceToggle').click();assert(sourceInput.value===svgDraft,'SVG draft lost');
+   document.querySelector('.diagram-source-mode').click();assert(sourceInput.value.includes('B[Encoder]'),'Mermaid draft lost');
+   sourceInput.value='invalid';sourceInput.dispatchEvent(new Event('input'));assert(document.querySelector('#diagramApplySource').disabled,'Invalid source accepted');
+   document.querySelector('#diagramSourceToggle').click();
    const scene=()=>JSON.parse(decodeURIComponent(new DOMParser().parseFromString(document.querySelector('#architectureMarkup').value,'image/svg+xml').documentElement.dataset.labbookDiagram));
    assert(document.querySelectorAll('[data-diagram-node]').length===4,'pipeline template missing');
    document.querySelector('[data-add-shape="box"]').click();assert(scene().nodes.length===5,'add block failed');

@@ -112,10 +112,38 @@ function openVisualDiagramEditor(existing=null){
  q('diagramTemplate').onchange=e=>{if(!e.target.value)return;change(()=>{scene=e.target.value==='blank'?DiagramModel.empty():DiagramModel.template(e.target.value);selected=null});e.target.value=''};
  q('diagramZoom').onchange=e=>{zoom=Number(e.target.value);draw()};
  q('diagramUndo').onclick=()=>{if(!undo.length)return;redo.push(JSON.stringify(scene));scene=JSON.parse(undo.pop());selected=null;selectedIds.clear();visualChanged=true;draw();properties()};q('diagramRedo').onclick=()=>{if(!redo.length)return;undo.push(JSON.stringify(scene));scene=JSON.parse(redo.pop());selected=null;selectedIds.clear();visualChanged=true;draw();properties()};
- q('diagramSourceToggle').onclick=()=>{sourceMode=q('diagramSourcePanel').hidden;q('diagramSourcePanel').hidden=!sourceMode;q('diagramSourceToggle').setAttribute('aria-expanded',String(sourceMode));if(sourceMode)q('architecturePreview').replaceChildren(architectureFrame(q('architectureMarkup').value))};
- q('architectureMarkup').oninput=()=>{sourceMode=true;q('architecturePreview').replaceChildren(architectureFrame(q('architectureMarkup').value))};
- mermaidButton.onclick=()=>{sourceMode=true;q('diagramSourcePanel').hidden=false;q('diagramSourceToggle').setAttribute('aria-expanded','true');const input=q('architectureMarkup');input.value=input.value.trim().startsWith('flowchart')?input.value:'flowchart LR\n  Input[Input patches] --> Encoder[Vision encoder]\n  Encoder --> Projector[Projector · N tokens]\n  Projector --> LLM[LLM / decoder]';input.dataset.format='mermaid';q('architecturePreview').textContent='Mermaid flowchart ready. Click Import to create editable objects.';status('Mermaid mode: use flowchart LR/TB and arrows such as --> or -.->.')};
- q('diagramApplySource').onclick=()=>{const raw=q('architectureMarkup').value,imported=q('architectureMarkup').dataset.format==='mermaid'?mermaidToScene(raw):diagramFromMarkup(raw);if(!imported)return status(q('architectureMarkup').dataset.format==='mermaid'?'Unsupported Mermaid syntax. Use flowchart LR/TB with A[Label] --> B[Label].':'Visual import needs valid SVG. HTML can still be saved directly in Source mode.');snapshot();scene=imported;selected=null;sourceValue=DiagramModel.svg(scene);q('architectureMarkup').value=sourceValue;q('architectureMarkup').dataset.format='svg';visualChanged=false;draw();properties();status('Source imported. Objects are ready to edit.')};
+ const sourceDrafts={svg:sourceValue,mermaid:'flowchart LR\n  Input[Input patches] --> Encoder[Vision encoder]\n  Encoder --> Projector[Projector · N tokens]\n  Projector --> LLM[LLM / decoder]'};
+ q('architectureMarkup').dataset.format='svg';
+ const sourceLabel=q('diagramSourcePanel').querySelector('label').firstChild;
+ const sourceFeedback=document.createElement('p');sourceFeedback.className='diagram-source-feedback';sourceFeedback.setAttribute('role','status');q('architectureMarkup').closest('label').after(sourceFeedback);
+ function previewSource(){
+  const input=q('architectureMarkup'),isMermaid=input.dataset.format==='mermaid';
+  sourceLabel.textContent=isMermaid?'Mermaid flowchart':'SVG / HTML source';
+  q('diagramApplySource').textContent=isMermaid?'Apply flowchart to canvas':'Import SVG into canvas';
+  for(const [button,active]of [[mermaidButton,isMermaid],[q('diagramSourceToggle'),!isMermaid]]){button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-expanded',String(sourceMode&&active))}
+  try{
+   if(isMermaid){
+    const imported=mermaidToScene(input.value);
+    if(!imported||!imported.nodes.length)throw Error('Use flowchart LR or TB, then A[Label] --> B[Label].');
+    q('architecturePreview').replaceChildren(architectureFrame(DiagramModel.svg(imported)));
+    sourceFeedback.textContent='Preview · '+imported.nodes.length+' objects. Apply to edit them on the canvas.';
+   }else{
+    if(!/<(?:svg|div|section|article|style|p|h[1-6])\b/i.test(input.value))throw Error('Enter SVG or HTML markup. For flowchart syntax, select Mermaid.');
+    q('architecturePreview').replaceChildren(architectureFrame(input.value));
+    sourceFeedback.textContent='Preview · Import SVG as editable objects, or save HTML directly.';
+   }
+   q('diagramApplySource').disabled=!isMermaid&&!/^\s*<svg\b/i.test(input.value);
+  }catch(error){q('architecturePreview').replaceChildren();sourceFeedback.textContent=error.message;q('diagramApplySource').disabled=true}
+ }
+ function openSource(format){
+  const input=q('architectureMarkup');sourceDrafts[input.dataset.format||'svg']=input.value;
+  input.dataset.format=format;input.value=sourceDrafts[format];sourceMode=true;
+  q('diagramSourcePanel').hidden=false;previewSource();input.focus();
+ }
+ q('diagramSourceToggle').onclick=()=>openSource('svg');
+ mermaidButton.textContent='Mermaid';mermaidButton.onclick=()=>openSource('mermaid');
+ q('architectureMarkup').oninput=()=>{sourceMode=true;previewSource()};
+ q('diagramApplySource').onclick=()=>{const raw=q('architectureMarkup').value,imported=q('architectureMarkup').dataset.format==='mermaid'?mermaidToScene(raw):diagramFromMarkup(raw);if(!imported)return status(q('architectureMarkup').dataset.format==='mermaid'?'Unsupported Mermaid syntax. Use flowchart LR/TB with A[Label] --> B[Label].':'Visual import needs valid SVG. HTML can still be saved directly in Source mode.');snapshot();scene=imported;selected=null;sourceValue=DiagramModel.svg(scene);q('architectureMarkup').value=sourceValue;q('architectureMarkup').dataset.format='svg';sourceDrafts.svg=sourceValue;visualChanged=false;draw();properties();previewSource();status('Source imported. Objects are ready to edit.')};
  async function addImage(data,label='Image'){const img=new Image();img.src=data;await img.decode();change(()=>{const w=Math.max(40,Math.min(480,img.naturalWidth)),h=Math.max(30,w*img.naturalHeight/img.naturalWidth);const n={...DiagramModel.node(crypto.randomUUID(),label,40,40,'#fff','image'),w,h:Math.min(h,scene.height-60),image:data};scene.nodes.push(n);selected=n.id});status('Image added. Drag it or edit its dimensions.')}
  async function upload(file){if(!file)return;if(file.size>8*1024*1024)throw Error('Choose an image smaller than 8 MB');if(file.type==='image/svg+xml'||/\.svg$/i.test(file.name)){const raw=await file.text(),imported=diagramFromMarkup(raw);if(!imported)throw Error('This SVG could not be read');change(()=>{scene=imported;selected=null});return}if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Upload PNG, JPEG, WebP or SVG');const reader=new FileReader(),data=await new Promise((resolve,reject)=>{reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});await addImage(data,file.name)}
  q('diagramImageInput').onchange=async e=>{try{await upload(e.target.files[0])}catch(error){status(error.message)}e.target.value=''};
@@ -124,7 +152,7 @@ function openVisualDiagramEditor(existing=null){
   if(q('architectureMarkup').value!==sourceValue)return status('Import or save your source changes before generating a new figure.');const prompt=q('diagramPrompt').value.trim();if(!prompt)return status('Describe the figure to generate.');request=new AbortController();q('diagramGenerate').disabled=true;q('diagramCancelGeneration').hidden=false;status('Generating with OpenAI…');
   try{const response=await fetch('/api/diagrams/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,mode:q('diagramGenerationMode').value}),signal:request.signal});let data;try{data=await response.json()}catch{throw Error('The server returned an unreadable response. Restart the server if needed.')}if(!response.ok)throw Error(data.error||'Generation failed');if(!dialog.isConnected)return;if(data.mode==='image')await addImage(data.image,'Generated figure');else{DiagramModel.validate(data.scene);change(()=>{scene=data.scene;selected=null})}status('Generated figure ready. Review it before saving.')}catch(error){if(dialog.isConnected)status(error.name==='AbortError'?'Generation stopped.':error.message)}finally{request=null;if(dialog.isConnected){q('diagramGenerate').disabled=false;q('diagramCancelGeneration').hidden=true}}
  };q('diagramCancelGeneration').onclick=()=>request?.abort();
- function output(){const source=q('architectureMarkup').value;return source!==sourceValue||(!visualChanged&&original)?source:DiagramModel.svg(scene)}
+ function output(){const source=q('architectureMarkup').value;if(q('architectureMarkup').dataset.format==='mermaid'){const parsed=mermaidToScene(source);if(!parsed||!parsed.nodes.length)throw Error('Correct the Mermaid flowchart before saving.');return DiagramModel.svg(parsed)}return source!==sourceValue||(!visualChanged&&original)?source:DiagramModel.svg(scene)}
  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
  q('diagramExportSvg').onclick=()=>{const raw=output();if(!raw.trim().startsWith('<svg'))return status('SVG export requires an SVG figure. Use the visual editor or SVG source.');download(new Blob([raw],{type:'image/svg+xml'}),'research-diagram.svg')};
  q('diagramExportPng').onclick=async()=>{try{const raw=output();if(!raw.trim().startsWith('<svg'))throw Error('PNG export requires an SVG figure.');const image=new Image();image.src='data:image/svg+xml;base64,'+diagramBase64(raw);await image.decode();const c=document.createElement('canvas');c.width=scene.width*2;c.height=scene.height*2;const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(image,0,0,c.width,c.height);const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob)throw Error('PNG export failed');download(blob,'research-diagram.png')}catch(error){status(error.message)}};
@@ -133,5 +161,5 @@ function openVisualDiagramEditor(existing=null){
  q('insertArchitecture').onclick=()=>{try{const markup=output();if(!markup.trim())throw Error('The diagram is empty');const encoded=encodeURIComponent(markup);if(existing){existing.dataset.architecture=encoded;existing.replaceChildren();close();hydrateArchitectureBlocks();persistDraft()}else{close();insertEditorHTML(`<div contenteditable="false" class="architecture-block" data-architecture="${encoded}"></div><p><br></p>`);hydrateArchitectureBlocks();persistDraft()}}catch(error){status(error.message)}};
  dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();close();return}if(e.target.closest('input,textarea,select'))return;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();q(e.shiftKey?'diagramRedo':'diagramUndo').click()}else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();remove()}else if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)&&scene.nodes.some(n=>n.id===selected)){e.preventDefault();change(()=>{const n=scene.nodes.find(n=>n.id===selected),step=e.shiftKey?10:1;DiagramModel.translate(scene,n.id,e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0,e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0)})}});
  disposeAI=installDiagramAIChat({dialog,getScene:()=>scene,getSource:()=>output(),isSourceClean:()=>q('architectureMarkup').value===sourceValue,applyScene:next=>change(()=>{scene=next;selected=null}),status});
- draw();properties();stage.focus();if(sourceMode)q('architecturePreview').replaceChildren(architectureFrame(original));
+ draw();properties();stage.focus();if(sourceMode){if(/^(?:flowchart|graph)\s/i.test(original.trim())){q('architectureMarkup').dataset.format='mermaid';sourceDrafts.mermaid=original}previewSource()}
 };
