@@ -8,7 +8,9 @@ sh scripts/deploy-lan.sh
 ```
 
 This copies application code and installs runtime dependencies, preserving
-remote `data/` and `.env` files. It restarts the `lab-book` systemd service
+remote `data/`, `.env` files and `labbook.config.json`. It installs a systemd
+entry-point override for `src/server/server.cjs`, preserves other service
+settings and restarts the `lab-book` systemd service
 and checks its health. SSH and sudo authentication may be requested.
 Future deployments never copy the local database over the remote database.
 
