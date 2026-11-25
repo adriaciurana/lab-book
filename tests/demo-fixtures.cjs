@@ -7,7 +7,7 @@ test('TEST fixtures preserve existing work, are repeatable, and reject productio
  const base=await launch('test'),real=await launch('production');
  await assert.rejects(()=>seedTest({base:real,dataRoot}),/not a TEST/);assert.ok(!fs.existsSync(path.join(dataRoot,'production')));
  const existing=await(await fetch(base+'/api/v1/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'Existing user note',folder:'inbox',content:'<p>Keep me</p>'})})).json();
- const first=await seedTest({base,dataRoot});assert.equal(first.added.tasks,36);assert.equal(first.added.experiments,18);assert.ok(fs.existsSync(first.backup));
+ const first=await seedTest({base,dataRoot});assert.equal(first.added.tasks,48);assert.equal(first.added.experiments,30);assert.ok(fs.existsSync(first.backup));
  let state=await(await fetch(base+'/api/state')).json();assert.ok(state.notes.some(n=>n.id===existing.id));assert.equal(state.papers.filter(p=>p.mock).length,2);
  for(const paper of state.papers){const response=await fetch(base+paper.localUrl);assert.equal(response.headers.get('content-type'),'application/pdf');assert.ok((await response.text()).startsWith('%PDF-'))}
  const edit=await fetch(base+'/api/v1/notes/demo-home',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:'<p>User edits to the mock page</p>'})});assert.equal(edit.status,200);

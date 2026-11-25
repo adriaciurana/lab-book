@@ -20,6 +20,6 @@ async function seedTest({base=process.env.LABBOOK_TEST_URL||'http://127.0.0.1:41
  }
  const saved=(await json('/api/state')).value;
  for(const [collection,rows]of Object.entries(fixtures))for(const row of rows){const key=collection==='context'?'key':'id';if(!saved[collection]?.some(r=>r[key]===row[key]))throw Error('Fixture did not persist: '+collection+' '+row[key])}
- const result={environment:'test',added,backup,start:base+'/notes/demo-home',views:base+'/views/demo-research-overview',experiments:base+'/experiments'};console.log(JSON.stringify(result,null,2));return result;
+ const result={environment:'test',added,backup,start:base+'/notes/showcase-start',views:base+'/views/showcase-pipeline',experiments:base+'/experiments'};console.log(JSON.stringify(result,null,2));return result;
 }
 module.exports={seedTest};if(require.main===module)seedTest().catch(error=>{console.error(error.message);process.exitCode=1});

@@ -7,7 +7,7 @@ app.whenReady().then(async()=>{
   await win.loadURL('http://localhost:4175/notes/demo-home');
   const summary=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,100));
-   assert(window.LABBOOK_ENV==='test','Not TEST');assert(document.querySelector('.editor-body').textContent.includes('MOCK DATA'),'Demo start page missing');
+   assert(window.LABBOOK_ENV==='test','Not TEST');openEditor(state.notes.find(n=>n.id==='demo-home'));await tick();assert(document.querySelector('.editor-body').textContent.includes('MOCK DATA'),'Demo start page missing');
    assert(document.querySelector('.architecture-frame'),'Home architecture missing');
    await applyWorkspaceRoute();
    const root=state.notes.find(n=>n.id==='demo-video');openEditor(root);await tick();
@@ -26,12 +26,15 @@ app.whenReady().then(async()=>{
    assert(document.querySelectorAll('.architecture-frame').length===2,'SVG/HTML diagrams missing');
    currentView='board-view';window.activeBoardView='demo-research-overview';render();
    assert(document.querySelectorAll('.task').length===27,'Combined research view has wrong tasks');
-   currentView='experiments';render();assert(document.querySelectorAll('.hub-results tbody tr').length===18,'Experiment runs missing');
-   currentView='repositories';render();assert(document.querySelectorAll('.hub-repo-section').length===3,'Repository examples missing');
+   currentView='experiments';render();assert(document.querySelectorAll('.hub-results tbody tr').length===30,'Experiment runs missing');
+   currentView='repositories';render();assert(document.querySelectorAll('.hub-repo-section').length===6,'Repository examples missing');
    openEditor(state.notes.find(n=>n.id==='demo-draft'));assert(currentDraftNote().versions.length===2,'Manual versions missing');assert(!document.querySelector('#rollbackDraft').disabled,'Rollback disabled');
    currentView='search';render();await tick();const candidates=contextCandidates();
    assert(state.context.some(c=>c.type==='paragraph')&&state.context.some(c=>c.type==='paper')&&state.context.some(c=>c.type==='region'),'Mixed context examples missing');
    assert(candidates.some(c=>c.regionId==='demo-paper-video-highlight'),'Highlight unavailable as context');
+   const showcase=state.notes.find(n=>n.id==='showcase-diffusion');
+   assert(showcase?.published?.content.includes('Evaluation protocol'),'Published showcase missing');
+   assert(state.experiments.filter(run=>run.id.startsWith('showcase-')).every(run=>state.branches.some(branch=>branch.id===run.branchId&&branch.repoId===run.repoId)),'Showcase run has no matching branch');
    return {notes:state.notes.filter(n=>n.mock).length,tasks:state.tasks.filter(n=>n.mock).length,experiments:state.experiments.filter(n=>n.mock).length,papers:state.papers.filter(n=>n.mock).length};
   })()`);
   console.log('PASS: real TEST demo pages, live embeds, selectable local PDF, saved highlights, galleries, task views, experiments, branches, drafts and context',summary);app.exit(0);

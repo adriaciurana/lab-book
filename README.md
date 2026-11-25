@@ -110,6 +110,12 @@ Open **http://localhost:4173**. No API key is required for notes, papers, boards
 
 See the [full user guide](docs/user-guide.md) for editing, paper management and research workflows.
 
+To open the English research showcase, start `./run_server.sh --test`, run
+`npm run seed:test` in another terminal, and open
+[Research Lab Demo](http://localhost:4175/notes/showcase-start).
+The demo includes diffusion, VAE and LLM studies with fictional metrics, branches
+and linked tasks. Re-running the seed preserves existing records.
+
 ## Switch environments
 
 The installer creates `labbook.config.json` from [the example](labbook.config.example.json). Click **REAL** or **TEST** in the top bar, then **Create environment** to register a name and HTTP(S) server URL. You can also edit the configuration file directly. Saved environments appear immediately in the menu. The destination server must already be running. Navigation opens the destination home page; it never copies workspace data. For a desktop destination, register `http://localhost:4174`.
