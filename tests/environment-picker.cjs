@@ -7,7 +7,7 @@ fs.writeFileSync(process.env.LABBOOK_CONFIG,JSON.stringify({environments:[{name:
 let server;
 app.whenReady().then(async()=>{
  try{
-  server=require('../server.cjs');await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  server=require('../src/server/server.cjs');await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const win=new BrowserWindow({show:false,webPreferences:{partition:'environment-picker'}});
   await win.loadURL(`http://127.0.0.1:${server.address().port}/?isolated=1`);
   await win.webContents.executeJavaScript(`(async()=>{

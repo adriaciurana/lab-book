@@ -1,4 +1,4 @@
-const runtime=require('./runtime.cjs'),diagram=require('./diagram-model.js');
+const runtime=require('./runtime.cjs'),diagram=require('../shared/diagram-model.js');
 const schema={type:'object',additionalProperties:false,required:['width','height','nodes','edges'],properties:{width:{type:'number'},height:{type:'number'},nodes:{type:'array',items:{type:'object',additionalProperties:false,required:['id','kind','label','x','y','w','h','fill','stroke','fontSize','href'],properties:{id:{type:'string'},kind:{type:'string',enum:['box','ellipse','diamond','text']},label:{type:'string'},x:{type:'number'},y:{type:'number'},w:{type:'number'},h:{type:'number'},fill:{type:'string'},stroke:{type:'string'},fontSize:{type:'number'},href:{type:'string'}}}},edges:{type:'array',items:{type:'object',additionalProperties:false,required:['id','from','to','label','dashed'],properties:{id:{type:'string'},from:{type:'string'},to:{type:'string'},label:{type:'string'},dashed:{type:'boolean'}}}}}};
 function requestFor(input){
  if(typeof input.prompt!=='string'||!input.prompt.trim()||input.prompt.length>8000)throw Error('Describe the diagram in 1–8000 characters');

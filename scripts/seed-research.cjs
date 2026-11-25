@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path');
 if(process.env.NODE_ENV==='test'||process.argv.includes('--test'))throw Error('This curated import is for production. Use the migration script afterward to copy it to test.');
-const runtime=require('./runtime.cjs'),service=require('./paper-service.cjs'),catalog=require('./research-catalog.cjs');
+const runtime=require('../src/server/runtime.cjs'),service=require('../src/server/paper-service.cjs'),catalog=require('../src/server/research-catalog.cjs');
 const directory=path.join(runtime.dataRoot,'production'),file=path.join(directory,'state.json');
 if(!fs.existsSync(file))throw Error('Open the production app once before importing.');
 const backup=file+'.before-research-'+Date.now();fs.copyFileSync(file,backup);

@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),http=require('node:http');
-const model=require('../diagram-model.js'),service=require('../diagram-service.cjs');
+const model=require('../src/shared/diagram-model.js'),service=require('../src/server/diagram-service.cjs');
 test('diagram geometry, export and input validation',()=>{
  const scene=model.template('pipeline');model.validate(scene);assert.equal(scene.nodes.length,4);assert.equal(scene.edges.length,3);assert.ok(model.connector(scene,scene.edges[0]).path.startsWith('M'));
  scene.nodes[0].label='<script>alert(1)</script>';const exported=model.svg(scene);assert.ok(!exported.includes('<script>'));assert.ok(exported.includes('&lt;script&gt;'));assert.ok(exported.includes('data-labbook-diagram='));

@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=adria
 WorkingDirectory=/home/adria/lab-book
-ExecStart=/usr/bin/node /home/adria/lab-book/server.cjs
+ExecStart=/usr/bin/node /home/adria/lab-book/src/server/server.cjs
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=4173

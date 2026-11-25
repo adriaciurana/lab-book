@@ -220,7 +220,7 @@ Include web search is optional when context is selected. Skills provide addition
 
 The server reads OPENAI_API_KEY from its environment or a literal assignment in .zprofile, .zshrc, .bashrc, .bash_profile, or .profile. Web search and AI extraction require an internet connection and a valid key. Shell configuration files are read without executing them.
 
-HTML is not cached. Script and stylesheet URLs include a version. Restart the server after changing server.cjs or runtime.cjs.
+HTML is not cached. Script and stylesheet URLs include a version. Restart the server after changing src/server/server.cjs or src/server/runtime.cjs.
 
 ## Electron
 

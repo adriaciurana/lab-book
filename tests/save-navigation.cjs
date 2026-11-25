@@ -5,7 +5,7 @@ process.env.LABBOOK_DATA_DIR=directory;
 const initial={folders:[{id:'inbox',name:'Inbox'}],notes:[{id:'test-note',title:'Navigation test',folder:'inbox',content:'<p>Original text</p>',versions:[]}],papers:[],boards:[],tasks:[]};
 fs.mkdirSync(path.join(directory,'production'),{recursive:true});
 fs.writeFileSync(path.join(directory,'production','state.json'),JSON.stringify(initial));
-const server=require('../server.cjs');
+const server=require('../src/server/server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false});
  try{

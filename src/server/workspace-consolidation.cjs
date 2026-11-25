@@ -7,6 +7,6 @@ function consolidate(state,merges,stamp=new Date().toISOString()){
  const rewrite=html=>{for(const [id,target]of redirects)html=String(html||'').split('/notes/'+id).join('/notes/'+target).split('data-source-id="'+id+'"').join('data-source-id="'+target+'"');return html};
  for(const note of next.notes){if(note.archivedAt)continue;if(redirects.has(note.parentNoteId))note.parentNoteId=redirects.get(note.parentNoteId);if(note.parentNoteId===note.id)note.parentNoteId=null;note.content=rewrite(note.content);for(const block of note.blocks||[])block.html=rewrite(block.html);if(note.published){note.published.content=rewrite(note.published.content);for(const block of note.published.blocks||[])block.html=rewrite(block.html)}}
  for(const collection of ['boards','tasks','experiments','repositories','branches','papers','context'])for(const row of next[collection]||[])if(redirects.has(row.noteId))row.noteId=redirects.get(row.noteId);
- require('./research-model.js').validate(next);return {next,redirects:Object.fromEntries(redirects),activeNotes:next.notes.filter(n=>!n.archivedAt).length};
+ require('../shared/research-model.js').validate(next);return {next,redirects:Object.fromEntries(redirects),activeNotes:next.notes.filter(n=>!n.archivedAt).length};
 }
 module.exports={consolidate};

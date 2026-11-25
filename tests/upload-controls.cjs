@@ -1,6 +1,6 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os');
 process.env.LABBOOK_DATA_DIR=fs.mkdtempSync(require('node:path').join(os.tmpdir(),'labbook-upload-controls-'));
-const server=require('../server.cjs');
+const server=require('../src/server/server.cjs');
 app.whenReady().then(async()=>{try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const win=new BrowserWindow({show:false,width:1100,height:900});
  await win.loadURL(`http://127.0.0.1:${server.address().port}/papers?isolated=1`);

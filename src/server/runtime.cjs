@@ -2,7 +2,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const crypto=require('node:crypto');
 const environment=(process.argv.includes('--test')||process.env.npm_config_test==='true'||process.env.NODE_ENV==='test')?'test':'production';
-const dataRoot=path.resolve(process.env.LABBOOK_DATA_DIR||path.join(__dirname,'data'));
+const dataRoot=path.resolve(process.env.LABBOOK_DATA_DIR||path.join(require('../paths.cjs').projectRoot,'data'));
 const directory=path.join(dataRoot,environment);
 const stateFile=path.join(directory,'state.json');
 const auditFile=path.join(directory,'audit.jsonl');
@@ -82,7 +82,7 @@ async function handle(req,res){
  const url=new URL(req.url,'http://localhost');
  if(/^\/vendor\/pdf\.(?:worker\.)?mjs$/.test(url.pathname)){
   const name=url.pathname.includes('worker')?'pdf.worker.mjs':'pdf.mjs';
-  const file=path.join(__dirname,'node_modules','pdfjs-dist','build',name);
+  const file=path.join(require('../paths.cjs').projectRoot,'node_modules','pdfjs-dist','build',name);
   res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-cache'});
   fs.createReadStream(file).pipe(res);return true;
  }
@@ -101,7 +101,7 @@ async function handle(req,res){
   json(res,405,{error:'Method not allowed'});return true;
  }
  if(url.pathname==='/api/sota-review/run'&&req.method==='POST'){
-  const {spawn}=require('node:child_process');const configFile=path.join(directory,'sota-review-config.json');const saved=fs.existsSync(configFile)?JSON.parse(fs.readFileSync(configFile,'utf8')):{};const child=spawn(process.execPath,[path.join(__dirname,'scripts','sota-review.cjs'),...(environment==='test'?['--test']:[])],{cwd:__dirname,env:{...process.env,ELECTRON_RUN_AS_NODE:'1',LABBOOK_SOTA_URL:`http://127.0.0.1:${req.socket.localPort}`,LABBOOK_DATA_DIR:dataRoot,LABBOOK_SOTA_MODEL:saved.model||'gpt-4.1-mini'},detached:true,stdio:'ignore'});child.unref();json(res,202,{started:true,environment});return true;
+  const {spawn}=require('node:child_process');const configFile=path.join(directory,'sota-review-config.json');const saved=fs.existsSync(configFile)?JSON.parse(fs.readFileSync(configFile,'utf8')):{};const child=spawn(process.execPath,[path.join(require('../paths.cjs').projectRoot,'scripts','sota-review.cjs'),...(environment==='test'?['--test']:[])],{cwd:require('../paths.cjs').projectRoot,env:{...process.env,ELECTRON_RUN_AS_NODE:'1',LABBOOK_SOTA_URL:`http://127.0.0.1:${req.socket.localPort}`,LABBOOK_DATA_DIR:dataRoot,LABBOOK_SOTA_MODEL:saved.model||'gpt-4.1-mini'},detached:true,stdio:'ignore'});child.unref();json(res,202,{started:true,environment});return true;
  }
  if(url.pathname==='/api/research-gc'&&req.method==='POST'){
   const input=await readBody(req,200000), state=fs.existsSync(stateFile)?JSON.parse(fs.readFileSync(stateFile,'utf8')):{};
@@ -133,7 +133,7 @@ async function handle(req,res){
    note.content=note.collabBlocks.sort((a,b)=>(a.order??0)-(b.order??0)).map(x=>x.html).join('');
    if(conflicts.length)audit({action:'collab-conflict',noteId:id,userId:body.userId||'anonymous',blocks:conflicts});
   }else if(Object.prototype.hasOwnProperty.call(body,'content'))note.content=body.content;
-  note.updatedAt=new Date().toISOString();require('./research-model.js').validate(structuredClone(state));atomicWrite(stateFile,JSON.stringify(state));audit({action:'collab-note-patch',noteId:id,userId:body.userId||'anonymous',fields:Object.keys(body).filter(x=>x!=='userId')});return json(res,200,note);
+  note.updatedAt=new Date().toISOString();require('../shared/research-model.js').validate(structuredClone(state));atomicWrite(stateFile,JSON.stringify(state));audit({action:'collab-note-patch',noteId:id,userId:body.userId||'anonymous',fields:Object.keys(body).filter(x=>x!=='userId')});return json(res,200,note);
  }
  if(url.pathname==='/api/arxiv-pdf'){
   const stored=await localPdf({url:url.searchParams.get('url')});
@@ -144,7 +144,7 @@ async function handle(req,res){
   else if(req.method==='PUT'){
    const value=await readBody(req);
    if(!Array.isArray(value.notes)||!Array.isArray(value.folders))throw Error('Invalid workspace state');
-   require('./research-model.js').validate(structuredClone(value));
+   require('../shared/research-model.js').validate(structuredClone(value));
    const revision=stateRevision();
    if(revision!=='empty'&&req.headers['if-match']!==revision){json(res,409,{error:'Workspace changed in another window or import. Reload to load the latest data.'});return true}
    atomicWrite(stateFile,JSON.stringify(value));res.setHeader('X-Labbook-Revision',stateRevision());json(res,200,{saved:true,environment});

@@ -1,6 +1,6 @@
 (function(root){
- const md=typeof module!=='undefined'&&module.exports?require('./vendor/markdown-it.min.js'):root.markdownit;
- const math=typeof module!=='undefined'&&module.exports?require('./vendor/katex/katex.min.js'):root.katex;
+ const md=typeof module!=='undefined'&&module.exports?require('../client/vendor/markdown-it.min.js'):root.markdownit;
+ const math=typeof module!=='undefined'&&module.exports?require('../client/vendor/katex/katex.min.js'):root.katex;
  const parser=md({html:false,breaks:false,linkify:false,typographer:false});
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function normalizeLatex(latex){return String(latex).replace(/\u0009(ext|imes|heta|au|op|ilde)\b/g,'\\t$1').replace(/\u000c(rac|orall)\b/g,'\\f$1').replace(/\u0008(eta|egin)\b/g,'\\b$1').replace(/\r(angle|ho|ight)\b/g,'\\r$1')}

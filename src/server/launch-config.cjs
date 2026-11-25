@@ -1,6 +1,6 @@
 const fs=require('node:fs');
 const path=require('node:path');
-function load(file=process.env.LABBOOK_CONFIG||path.join(__dirname,'labbook.config.json')){
+function load(file=process.env.LABBOOK_CONFIG||path.join(require('../paths.cjs').projectRoot,'labbook.config.json')){
  const input=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{};
  const environments=(input.environments||[]).map(item=>{
   if(!item.name||typeof item.name!=='string')throw Error('Environment name is required');
@@ -10,7 +10,7 @@ function load(file=process.env.LABBOOK_CONFIG||path.join(__dirname,'labbook.conf
  });
  return {...input,environments};
 }
-function create(input,file=process.env.LABBOOK_CONFIG||path.join(__dirname,'labbook.config.json')){
+function create(input,file=process.env.LABBOOK_CONFIG||path.join(require('../paths.cjs').projectRoot,'labbook.config.json')){
  const name=String(input.name||'').trim();
  if(!name||name.length>80)throw Error('Enter an environment name (up to 80 characters)');
  const url=new URL(input.url);

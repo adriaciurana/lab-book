@@ -26,7 +26,7 @@ module.exports=function(state){
  return state;
 };
 if(require.main===module){
- const fs=require('node:fs'),path=require('node:path'),runtime=require('./runtime.cjs');
+ const fs=require('node:fs'),path=require('node:path'),runtime=require('../src/server/runtime.cjs');
  const file=path.join(runtime.dataRoot,'production','state.json');
  const state=module.exports(JSON.parse(fs.readFileSync(file,'utf8')));
  runtime.atomicWrite(file,JSON.stringify(state));

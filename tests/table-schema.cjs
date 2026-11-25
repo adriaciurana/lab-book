@@ -1,4 +1,4 @@
-const {test}=require('node:test'),assert=require('node:assert/strict'),table=require('../table-schema.js'),model=require('../research-model.js');
+const {test}=require('node:test'),assert=require('node:assert/strict'),table=require('../src/shared/table-schema.js'),model=require('../src/shared/research-model.js');
 const column=(key,type,extra={})=>({id:key,key,label:key,source:'metrics',type,objective:'none',...extra});
 test('typed column semantics preserve zero/false and sort missing values last',()=>{
  const loss=column('loss','continuous',{objective:'min',precision:3,min:0}),quality=column('quality','ordinal',{options:['low','medium','high'],objective:'max'});

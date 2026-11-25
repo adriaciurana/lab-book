@@ -47,7 +47,7 @@ The server and desktop app include a lightweight scheduler. In **Settings → SO
 
 The scheduler checks once a minute, prevents overlapping scheduled runs in that process, retries failed attempts after an hour and records the interval from the last successful review. Run one server per environment. Reviews discover candidates through OpenAI search, retrieve paper metadata and skip existing papers. They add papers to the bank; they do not launch training or independently certify SOTA claims. Reports and configuration are saved under the active environment's data directory.
 
-For an always-on server, supervise `node server.cjs` using your OS service manager with the same data directory and environment variables. Historical `sota-install` scripts are deprecated: remove any old `com.labbook.sota-review` LaunchAgent before relying on the built-in scheduler.
+For an always-on server, supervise `node src/server/server.cjs` using your OS service manager with the same data directory and environment variables. Historical `sota-install` scripts are deprecated: remove any old `com.labbook.sota-review` LaunchAgent before relying on the built-in scheduler.
 
 ## Configuration and access
 
@@ -75,3 +75,20 @@ npm run package:desktop
 The default test suite covers isolated server persistence, the research API, typed columns, lifecycle behavior, environment configuration and SOTA scheduling. Coverage uses Node's built-in instrumentation and prints measured results; it is not a claim of full UI coverage. Additional `test:*` scripts exercise Electron browser flows and generally require a running local server. Tests use simulated AI responses and temporary storage.
 
 CI runs the default suite with coverage on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution checks and [SECURITY.md](SECURITY.md) for reporting issues. No open-source license has been selected yet; public visibility alone does not grant redistribution rights.
+
+## Project structure
+
+```text
+src/
+  client/       Browser UI, styles, HTML and vendored browser assets
+  server/       HTTP server, persistence, research API and AI services
+  shared/       Models and validation reused by browser and server
+  electron/     Desktop application entry point
+  paths.cjs     Stable project root for data and configuration
+scripts/        Seeding, migration, maintenance and SOTA scheduling
+tests/         Node and Electron regression tests
+docs/          User guide and project artwork
+deploy/        Service and reverse proxy examples
+```
+
+Browser asset URLs stay stable. The server exposes client assets and shared modules without exposing server source. Workspace data remains under the existing `data/` directory; this reorganization does not require a migration. Launch from the project root with the shell launchers or npm scripts.

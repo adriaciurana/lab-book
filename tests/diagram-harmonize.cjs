@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),http=require('node:http');
-const model=require('../diagram-model.js'),service=require('../diagram-harmonize.cjs');
+const model=require('../src/shared/diagram-model.js'),service=require('../src/server/diagram-harmonize.cjs');
 test('research primitives, hierarchy and immutable scientific content',()=>{
  const scene=model.template('research');model.validate(scene);assert(scene.nodes.some(n=>n.kind==='patchgrid'));
  const old=scene.nodes.find(n=>n.id==='patches').x;model.translate(scene,'inputs',20,10);assert.equal(scene.nodes.find(n=>n.id==='patches').x,old+20);

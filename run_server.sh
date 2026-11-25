@@ -15,11 +15,11 @@ if $mdns; then
   else echo 'mDNS requires dns-sd (macOS) or avahi-utils (Linux).' >&2; exit 1; fi
   mdns_pid=$!
   trap 'kill "$mdns_pid" 2>/dev/null || true' EXIT
-  node server.cjs "${args[@]+${args[@]}}" &
+  node src/server/server.cjs "${args[@]+${args[@]}}" &
   server_pid=$!
   trap 'kill "$server_pid" "$mdns_pid" 2>/dev/null || true' EXIT
   trap 'exit 130' INT TERM
   wait "$server_pid"
 else
-  exec node server.cjs "${args[@]+${args[@]}}"
+  exec node src/server/server.cjs "${args[@]+${args[@]}}"
 fi

@@ -1,6 +1,6 @@
 // Re-runnable curated import; preserve all user notes and annotations.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const runtime=require('../runtime.cjs'),service=require('../paper-service.cjs');
+const runtime=require('../src/server/runtime.cjs'),service=require('../src/server/paper-service.cjs');
 const root=path.resolve(__dirname,'..'),stamp=new Date().toISOString(),report={startedAt:stamp,completed:[],errors:[]};
 const additions=process.argv.includes('--recent-only')?[
  ['2607.24653','LLMs',['Kimi-K3','multimodal','recent-2026'],'Kimi K3: informe reciente de inteligencia multimodal y agentes.'],

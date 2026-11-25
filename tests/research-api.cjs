@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),{spawn}=require('node:child_process');
 test('agent API validates relationships, preserves concurrent updates, and isolates data',async t=>{
  const data=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-research-api-'));
- const child=spawn(process.execPath,['server.cjs','--test'],{cwd:path.join(__dirname,'..'),env:{...process.env,PORT:'0',LABBOOK_DATA_DIR:data,LABBOOK_AGENT_TOKEN:'test-only-token'},stdio:['ignore','pipe','pipe']});
+ const child=spawn(process.execPath,['src/server/server.cjs','--test'],{cwd:path.join(__dirname,'..'),env:{...process.env,PORT:'0',LABBOOK_DATA_DIR:data,LABBOOK_AGENT_TOKEN:'test-only-token'},stdio:['ignore','pipe','pipe']});
  t.after(()=>{child.kill();fs.rmSync(data,{recursive:true,force:true})});
  const base=await new Promise((resolve,reject)=>{let output='';child.stdout.on('data',chunk=>{output+=chunk;const m=output.match(/localhost:(\d+)/);if(m)resolve('http://127.0.0.1:'+m[1])});child.once('error',reject);child.once('exit',code=>reject(Error('Unexpected server exit '+code)))});
  const request=async(route,method='GET',body,extra={})=>{const response=await fetch(base+'/api/v1/'+route,{method,headers:{Authorization:'Bearer test-only-token','Content-Type':'application/json',...extra},body:body===undefined?undefined:JSON.stringify(body)});return {status:response.status,body:await response.json(),etag:response.headers.get('etag')}};

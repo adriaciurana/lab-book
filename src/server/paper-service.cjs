@@ -16,7 +16,7 @@ async function metadata(ids){
 }
 async function extractText(file){
  const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');
- const document=await pdfjs.getDocument({data:new Uint8Array(fs.readFileSync(file)),verbosity:0,cMapUrl:path.join(__dirname,'node_modules/pdfjs-dist/cmaps')+path.sep,cMapPacked:true,standardFontDataUrl:path.join(__dirname,'node_modules/pdfjs-dist/standard_fonts')+path.sep}).promise;
+ const document=await pdfjs.getDocument({data:new Uint8Array(fs.readFileSync(file)),verbosity:0,cMapUrl:path.join(require('../paths.cjs').projectRoot,'node_modules/pdfjs-dist/cmaps')+path.sep,cMapPacked:true,standardFontDataUrl:path.join(require('../paths.cjs').projectRoot,'node_modules/pdfjs-dist/standard_fonts')+path.sep}).promise;
  const pages=[];try{for(let i=1;i<=document.numPages;i++){const text=await(await document.getPage(i)).getTextContent();pages.push('[Page '+i+']\n'+text.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join(''))}return {text:pages.join('\n\n'),pages:document.numPages}}finally{await document.destroy()}
 }
 function selectText(text,max=65000){

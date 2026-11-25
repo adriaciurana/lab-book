@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const root=path.resolve(process.env.LABBOOK_DATA_DIR||path.join(__dirname,'data'));
+const root=path.resolve(process.env.LABBOOK_DATA_DIR||path.join(require('../src/paths.cjs').projectRoot,'data'));
 const source=path.join(root,'production'),target=path.join(root,'test');
 const file=path.join(source,'state.json');
 if(!fs.existsSync(file)){console.error('Open the updated production app first to import your browser data to disk.');process.exit(1)}

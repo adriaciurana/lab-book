@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=%h/lab-book
-ExecStart=/usr/bin/env node %h/lab-book/server.cjs
+ExecStart=/usr/bin/env node %h/lab-book/src/server/server.cjs
 Restart=on-failure
 Environment=NODE_ENV=production
 Environment=PORT=4173

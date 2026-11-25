@@ -1,13 +1,13 @@
 const fs=require('node:fs'),crypto=require('node:crypto');
-const model=require('./research-model.js');
+const model=require('../shared/research-model.js');
 module.exports=async function(req,res,runtime){
  const url=new URL(req.url,'http://localhost');if(!url.pathname.startsWith('/api/v1/'))return false;
  const {json,readBody,stateFile,stateRevision,atomicWrite}=runtime;
  if(process.env.LABBOOK_AGENT_TOKEN&&req.headers.authorization!=='Bearer '+process.env.LABBOOK_AGENT_TOKEN){json(res,401,{error:'A valid bearer token is required'});return true}
  const [, , ,collection,id]=url.pathname.split('/');
- if(collection==='docs'){res.writeHead(200,{'Content-Type':'text/markdown; charset=utf-8','Cache-Control':'no-store'});res.end(fs.readFileSync(require('node:path').join(__dirname,'agent-api.md'),'utf8'));return true}
+ if(collection==='docs'){res.writeHead(200,{'Content-Type':'text/markdown; charset=utf-8','Cache-Control':'no-store'});res.end(fs.readFileSync(require('node:path').join(require('../paths.cjs').projectRoot,'agent-api.md'),'utf8'));return true}
  if(collection==='skill'){try{const text=require('./skill-catalog.cjs').readSkill(url.searchParams.get('name')||'lab-book-research',url.searchParams.get('resource')||'instructions');res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});res.end(text)}catch(error){json(res,404,{error:error.message})}return true}
- if(collection==='schema'){json(res,200,{version:3,environment:runtime.environment,collections:model.collections,columnTypes:require('./table-schema.js').types,experimentStatuses:model.statuses,documentation:'/api/v1/docs',operations:['GET collection','GET collection/id','POST collection','PATCH collection/id','DELETE collection/id'],sharing:{visibility:['private','workspace','shared'],roles:['view','edit'],collections:['notes','folders','boards','papers','experiments','repositories']},notes:'Research streams are notes created from a template. Use noteId to link tasks, boards, experiments and repository branches. DELETE rejects dangling references. Use If-Match to guard read-modify-write. POST externalId is idempotent.'});return true}
+ if(collection==='schema'){json(res,200,{version:3,environment:runtime.environment,collections:model.collections,columnTypes:require('../shared/table-schema.js').types,experimentStatuses:model.statuses,documentation:'/api/v1/docs',operations:['GET collection','GET collection/id','POST collection','PATCH collection/id','DELETE collection/id'],sharing:{visibility:['private','workspace','shared'],roles:['view','edit'],collections:['notes','folders','boards','papers','experiments','repositories']},notes:'Research streams are notes created from a template. Use noteId to link tasks, boards, experiments and repository branches. DELETE rejects dangling references. Use If-Match to guard read-modify-write. POST externalId is idempotent.'});return true}
  if(!model.collections.includes(collection)){json(res,404,{error:'Unknown collection'});return true}
  try{
   // Await the request before reading state so parallel requests cannot overwrite a stale snapshot.

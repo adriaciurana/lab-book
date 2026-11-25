@@ -1,7 +1,7 @@
 const fs=require('node:fs');
 const path=require('node:path');
-const runtime=require('../runtime.cjs');
-const service=require('../paper-service.cjs');
+const runtime=require('../src/server/runtime.cjs');
+const service=require('../src/server/paper-service.cjs');
 
 const root=path.join(__dirname,'..');
 const test=process.argv.includes('--test');

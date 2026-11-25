@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const {mockPdf,buildFixtures}=require('./demo-fixtures.cjs'),model=require('./research-model.js');
-async function seedTest({base=process.env.LABBOOK_TEST_URL||'http://127.0.0.1:4175',dataRoot=process.env.LABBOOK_DATA_DIR||path.join(__dirname,'data')}={}){
+const {mockPdf,buildFixtures}=require('../src/server/demo-fixtures.cjs'),model=require('../src/shared/research-model.js');
+async function seedTest({base=process.env.LABBOOK_TEST_URL||'http://127.0.0.1:4175',dataRoot=process.env.LABBOOK_DATA_DIR||path.join(require('../src/paths.cjs').projectRoot,'data')}={}){
  const headers=process.env.LABBOOK_AGENT_TOKEN?{Authorization:'Bearer '+process.env.LABBOOK_AGENT_TOKEN}:{};
  async function json(route,options={}){const response=await fetch(base+route,{...options,headers:{...headers,...options.headers}}),text=await response.text();let value;try{value=JSON.parse(text)}catch{throw Error('Non-JSON response from '+route)}if(!response.ok)throw Error(value.error||'HTTP '+response.status);return {value,response}}
  const health=(await json('/api/health')).value,schema=(await json('/api/v1/schema')).value;

@@ -1,8 +1,8 @@
 // Explicit one-time cleanup. The complete previous environment is moved to a backup.
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
-const root=path.join(__dirname,'data'),production=path.join(root,'production');
+const root=path.join(require('../src/paths.cjs').projectRoot,'data'),production=path.join(root,'production');
 const original=JSON.parse(fs.readFileSync(path.join(production,'state.json'),'utf8'));
-const catalog=require('./research-catalog.cjs');
+const catalog=require('../src/server/research-catalog.cjs');
 const allowed=new Set(catalog.map(row=>'research-'+row[0]).concat('research-wan-2-2-official'));
 const papers=original.papers.filter(p=>allowed.has(p.id));
 if(papers.length!==41||papers.filter(p=>p.fileId&&p.guide).length!==40)throw Error('Expected all 40 local papers + guides and the Wan2.2 reference. Cleanup aborted.');

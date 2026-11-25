@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {EventEmitter}=require('node:events');
-const {load,create}=require('../launch-config.cjs');
+const {load,create}=require('../src/server/launch-config.cjs');
 const {start}=require('../scripts/server-scheduler.cjs');
 test('registered environments validate URLs and keep labels',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-launch-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));const file=path.join(dir,'config.json');

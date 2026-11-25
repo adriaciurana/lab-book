@@ -1,5 +1,5 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
-process.env.LABBOOK_DATA_DIR=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-agent-layout-'));const server=require('../server.cjs');
+process.env.LABBOOK_DATA_DIR=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-agent-layout-'));const server=require('../src/server/server.cjs');
 app.whenReady().then(async()=>{try{await new Promise(r=>server.listen(0,'127.0.0.1',r));const win=new BrowserWindow({show:false,width:1450,height:1050});await win.loadURL('http://127.0.0.1:'+server.address().port+'/agent');
  await win.webContents.executeJavaScript(`(async()=>{const assert=(v,m)=>{if(!v)throw Error(m)},frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  assert(!document.querySelector('#selectedSkillDetails button'),'Skill editing actions still in chat');const select=document.querySelector('#activeSkill');select.value='research-scout';select.dispatchEvent(new Event('change'));assert(document.querySelector('#selectedSkillDetails p').textContent.includes('literature'),'Skill description removed');
