@@ -79,6 +79,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .environment-label{font:10px 'DM Mono';padding:5px 8px;border:1px solid var(--line);border-radius:6px;color:var(--muted)}
 .environment-label.test{background:#ffd778;color:#302808;border-color:#ffd778}
 
-.top-actions{position:relative}.environment-label{cursor:pointer;background:transparent;font:inherit}.environment-menu{position:absolute;right:0;top:100%;z-index:200;background:var(--bg,#fbfaf7);color:var(--text,#182a22);border:1px solid #809088;border-radius:10px;padding:12px;min-width:180px;box-shadow:0 8px 24px #0003}.environment-menu a,.environment-menu button{display:block;padding:8px;color:inherit}
+.top-actions{position:relative}.environment-label{cursor:pointer;background:transparent;font:inherit}.environment-menu{position:absolute;right:0;top:100%;z-index:200;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:180px;box-shadow:0 8px 24px #0003}.environment-menu a,.environment-menu button{display:block;padding:8px;color:inherit}
 
-.environment-form{min-width:280px;max-width:340px}.environment-form label{display:block;margin:10px 0}.environment-form input{display:block;width:100%;box-sizing:border-box;margin-top:5px}.environment-form p{font-size:13px;white-space:normal}.environment-menu [hidden]{display:none}
+.environment-form{width:min(310px,calc(100vw - 64px))}.environment-form label{display:block;margin:10px 0}.environment-form input{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}.environment-form p{font-size:13px;white-space:normal}.environment-menu [hidden]{display:none}
