@@ -2,6 +2,19 @@
 
 # Lab Book
 
+<p align="center">
+  <a href="src/client"><img alt="JavaScript, HTML and CSS" src="https://img.shields.io/badge/JavaScript-HTML%20%26%20CSS-f7df1e?style=flat-square&amp;logo=javascript&amp;logoColor=black"></a>
+  <a href="package.json"><img alt="Node.js 22 or newer" src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&amp;logo=nodedotjs&amp;logoColor=white"></a>
+  <a href="src/electron"><img alt="Desktop powered by Electron" src="https://img.shields.io/badge/desktop-Electron-47848f?style=flat-square&amp;logo=electron&amp;logoColor=white"></a>
+  <a href="#get-started"><img alt="macOS, Windows, Linux and browser" src="https://img.shields.io/badge/platforms-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20Browser-53665b?style=flat-square"></a>
+</p>
+<p align="center">
+  <a href="https://github.com/adriaciurana/lab-book/actions/workflows/test.yml"><img alt="Tests and coverage workflow status" src="https://github.com/adriaciurana/lab-book/actions/workflows/test.yml/badge.svg"></a>
+  <a href="#development-and-verification"><img alt="Status: early alpha" src="https://img.shields.io/badge/status-early%20alpha-d9a32a?style=flat-square"></a>
+  <a href="#configuration-and-access"><img alt="Storage: local files" src="https://img.shields.io/badge/storage-local%20files-1f3b2d?style=flat-square"></a>
+  <a href="CONTRIBUTING.md"><img alt="License: not selected" src="https://img.shields.io/badge/license-not%20selected-777777?style=flat-square"></a>
+</p>
+
 A local research workspace that connects papers, annotated PDFs, nested notes, task boards and experiments. Use it in your browser or as an Electron desktop app. Your workspace stays in local files; optional AI features send selected context to OpenAI.
 
 ## See the workflow
