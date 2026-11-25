@@ -10,6 +10,10 @@ app.whenReady().then(async()=>{
    openEditor();const noteId=activeNoteId;openArchitectureComposer();
    const svgDraft=document.querySelector('#architectureMarkup').value;
    document.querySelector('.diagram-source-mode').click();
+   await tick();
+   const panel=document.querySelector('#diagramSourcePanel'),panelBounds=panel.getBoundingClientRect();
+   assert(!panel.hidden&&panelBounds.top>=0&&panelBounds.top<innerHeight,'Click did not reveal source panel');
+   assert(panel.nextElementSibling.classList.contains('diagram-workspace'),'Source panel is below the canvas');
    const sourceInput=document.querySelector('#architectureMarkup');
    sourceInput.value='flowchart LR\\n  A[Input] --> B[Encoder]';sourceInput.dispatchEvent(new Event('input'));
    assert(document.querySelector('#architecturePreview iframe'),'Mermaid preview missing');

@@ -112,6 +112,9 @@ function openVisualDiagramEditor(existing=null){
  q('diagramTemplate').onchange=e=>{if(!e.target.value)return;change(()=>{scene=e.target.value==='blank'?DiagramModel.empty():DiagramModel.template(e.target.value);selected=null});e.target.value=''};
  q('diagramZoom').onchange=e=>{zoom=Number(e.target.value);draw()};
  q('diagramUndo').onclick=()=>{if(!undo.length)return;redo.push(JSON.stringify(scene));scene=JSON.parse(undo.pop());selected=null;selectedIds.clear();visualChanged=true;draw();properties()};q('diagramRedo').onclick=()=>{if(!redo.length)return;undo.push(JSON.stringify(scene));scene=JSON.parse(redo.pop());selected=null;selectedIds.clear();visualChanged=true;draw();properties()};
+ // Keep source editing next to its toolbar controls instead of below the canvas.
+ const sourcePanel=q('diagramSourcePanel');
+ dialog.querySelector('.diagram-workspace').before(sourcePanel);
  const sourceDrafts={svg:sourceValue,mermaid:'flowchart LR\n  Input[Input patches] --> Encoder[Vision encoder]\n  Encoder --> Projector[Projector · N tokens]\n  Projector --> LLM[LLM / decoder]'};
  q('architectureMarkup').dataset.format='svg';
  const sourceLabel=q('diagramSourcePanel').querySelector('label').firstChild;
@@ -138,7 +141,7 @@ function openVisualDiagramEditor(existing=null){
  function openSource(format){
   const input=q('architectureMarkup');sourceDrafts[input.dataset.format||'svg']=input.value;
   input.dataset.format=format;input.value=sourceDrafts[format];sourceMode=true;
-  q('diagramSourcePanel').hidden=false;previewSource();input.focus();
+  q('diagramSourcePanel').hidden=false;previewSource();sourcePanel.scrollIntoView({block:'nearest',behavior:'instant'});input.focus({preventScroll:true});
  }
  q('diagramSourceToggle').onclick=()=>openSource('svg');
  mermaidButton.textContent='Mermaid';mermaidButton.onclick=()=>openSource('mermaid');
