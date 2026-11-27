@@ -48,10 +48,23 @@
    const connect=document.createElement('button');connect.type='button';connect.className='btn ghost';
    connect.textContent=configuration.chatgptEmail?'Reconnect ChatGPT':'Continue with ChatGPT';
    connect.disabled=!configuration.chatgptAvailable;
-   connect.onclick=async()=>{try{const result=await api('chatgpt',{});location.assign(result.url)}catch(error){panel.status(error.message)}};
+   connect.onclick=async()=>{
+    connect.disabled=true;
+    panel.status('Opening ChatGPT sign-in…');
+    try{const result=await api('chatgpt',{});location.assign(result.url)}
+    catch(error){panel.status(error.message);connect.disabled=false}
+   };
    const info=document.createElement('p');
    info.textContent=configuration.chatgptEmail?'ChatGPT connected · '+configuration.chatgptEmail:configuration.chatgptAvailable?'Use your ChatGPT plan in My agent.':'To connect ChatGPT, open Lab Book at 127.0.0.1 or through an SSH tunnel.';
-   content.append(info,connect);
+   content.append(info);
+   if(configuration.chatgptAvailable)content.append(connect);
+   else{
+    const local=document.createElement('a');
+    local.className='btn ghost';
+    local.href='http://127.0.0.1:4173/agent';
+    local.textContent='Open Lab Book through the local tunnel';
+    content.append(local);
+   }
    if(configuration.chatgptEmail){
     const disconnect=document.createElement('button');disconnect.type='button';disconnect.className='text-btn';disconnect.textContent='Disconnect ChatGPT from Lab Book';
     disconnect.onclick=async()=>{try{await api('chatgpt',{disconnect:true});panel.close();if(currentView==='search')renderSearch();await settings()}catch(error){panel.status(error.message)}};
