@@ -1,9 +1,12 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-column-tasks-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1450,height:1000});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/inbox?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/inbox?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,70));
    state={folders:[{id:'inbox',name:'Inbox'}],notes:[{id:'stream',title:'Video research stream',folder:'inbox',content:'<p>Stream home</p>'},{id:'methods',title:'Ablation protocol',folder:'inbox',parentNoteId:'stream',content:'<p>Methods</p>'}],papers:[],context:[],boards:[{id:'video',name:'Video research',columns:['Backlog','Running','Done'],noteId:'stream'},{id:'product',name:'Product',columns:['Todo','Working','Done']}],tasks:[],boardViews:[{id:'combined',name:'Everything',boardIds:['video','product'],columnMap:{video:{Backlog:'Queue',Running:'Active'},product:{Todo:'Queue',Working:'Active'}}}]};ResearchModel.ensure(state);currentView='board';activeBoard='video';render();
@@ -27,6 +30,7 @@ app.whenReady().then(async()=>{
   })()`);
   const loaded=new Promise(r=>win.webContents.once('did-finish-load',r));win.webContents.reload();await loaded;
   const count=await win.webContents.executeJavaScript('state.tasks.length');if(count!==2)throw Error('Created tasks did not survive reload');
-  console.log('PASS: per-column creation, native status mapping, inherited page, searchable nested page link, direct page navigation, combined board destination, cancel/Escape without ghost tasks, reload');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: per-column creation, native status mapping, inherited page, searchable nested page link, direct page navigation, combined board destination, cancel/Escape without ghost tasks, reload');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

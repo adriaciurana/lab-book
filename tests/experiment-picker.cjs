@@ -1,13 +1,15 @@
 const {app,BrowserWindow}=require('electron');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-picker-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1380,height:1000});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/experiments?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/experiments?isolated=1');
   const result=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,30));
-   state=await(await fetch('/api/state')).json();ResearchModel.ensure(state);
    // Explicit fixture avoids depending on demo seeding or writing any server state.
    state.notes.push({id:'picker-parent',title:'Picker stream'},{id:'picker-child',title:'Nested ablation',parentNoteId:'picker-parent'});
    state.experiments.push({id:'picker-run',name:'Selector fixture',noteId:'picker-child',status:'planned',metrics:{}});
@@ -44,6 +46,7 @@ app.whenReady().then(async()=>{
    return {options:document.querySelectorAll('[role="option"]').length};
   })()`);
   fs.writeFileSync('/tmp/labbook-experiment-picker.png',(await win.webContents.capturePage()).toPNG());
-  console.log('PASS: searchable page picker, hierarchy, counts, actual filtering, mouse/keyboard, empty results, Escape, outside click, reset, both themes',result);app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: searchable page picker, hierarchy, counts, actual filtering, mouse/keyboard, empty results, Escape, outside click, reset, both themes',result);
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

@@ -1,8 +1,11 @@
 const {app,BrowserWindow}=require('electron');
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1500,height:1100,webPreferences:{partition:'research-hub-regression',offscreen:true}});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4173/inbox?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/inbox?isolated=1');
   const result=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,100));
    openEditor();const noteId=activeNoteId;
@@ -47,6 +50,7 @@ app.whenReady().then(async()=>{
   await new Promise(r=>setTimeout(r,120));
   const destination=await win.webContents.executeJavaScript(`({path:location.pathname,isolated:new URLSearchParams(location.search).has('isolated'),board:Boolean(document.querySelector('.board-page'))})`);
   if(destination.path!=='/boards/hub-a'||!destination.isolated||!destination.board)throw Error('Clickable diagram navigation failed: '+JSON.stringify(destination));
-  console.log('PASS: epic/task/subtask edits, aggregate drag preserves source, numeric metric sorting, run editing, PR/training graph, live embeds autosave, actual sandbox link click navigation');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: epic/task/subtask edits, aggregate drag preserves source, numeric metric sorting, run editing, PR/training graph, live embeds autosave, actual sandbox link click navigation');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

@@ -3,6 +3,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -13,6 +14,18 @@ jobs:
       - run: npm run test:coverage
       - name: Browser integration tests
         run: |
-          for suite in accounts-ui my-agent agent-layout workspace-pages agent-send-lock environment-picker; do
-            xvfb-run -a env -u ELECTRON_RUN_AS_NODE ./node_modules/.bin/electron --no-sandbox "tests/$suite.cjs"
+          # LAN and curated-library smoke tests require an operator-provided workspace.
+          suites=(
+            accounts-ui agent-layout agent-send-lock appearance board-workspace column-editor
+            column-tasks demo-browser diagram-chat diagram-editor editor-agent environment-picker
+            experiment-picker inline-board lifecycle-browser math-notes mobile my-agent
+            nested-pages page-questions persistence proposal-destination-ui published-pages reader
+            research-attachments research-hub research-polish research-stream-skill routes save-navigation
+            search-controls sidebar-forms sidebar-resize skill-manager source-pdf-import upload-controls
+            workspace-pages
+          )
+          for suite in "${suites[@]}"; do
+            echo "::group::$suite"
+            timeout 60s xvfb-run -a env -u ELECTRON_RUN_AS_NODE ./node_modules/.bin/electron --no-sandbox "tests/$suite.cjs"
+            echo "::endgroup::"
           done

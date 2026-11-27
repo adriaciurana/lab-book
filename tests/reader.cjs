@@ -1,12 +1,15 @@
 const {app,BrowserWindow}=require('electron');
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,webPreferences:{partition:'reader-regression'}});
+ let workspace;
  try{
+  workspace=await startWorkspaceServer();
   await win.loadURL('data:text/html,<h1>Research paper</h1><p>Selected evidence for a reproducible annotation.</p><div style="break-before:page"><h1>Second page</h1></div>');
   const pdf=await win.webContents.printToPDF({});
-  const response=await fetch('http://localhost:4175/api/papers/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fileData:'data:application/pdf;base64,'+pdf.toString('base64')})});
+  const response=await fetch(workspace.origin+'/api/papers/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fileData:'data:application/pdf;base64,'+pdf.toString('base64')})});
   const stored=await response.json();if(!response.ok)throw Error(JSON.stringify(stored));
-  await win.loadURL('http://localhost:4175/?isolated=1');
+  await win.loadURL(workspace.origin+'/?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,40));
    const p={id:'reader-paper',title:'Research paper',highlights:[],... ${JSON.stringify(stored)}};
@@ -60,7 +63,7 @@ app.whenReady().then(async()=>{
    assert(sent?.context.find(x=>x.type==='paper')?.text.includes('Selected evidence'),'request lacks full PDF text');
    assert(sent.context.find(x=>x.noteId==='context-note-two').text.includes('Independent context'),'request lacks note text');
    assert(sent.webSearch===false,'web search unexpectedly enabled');
-   assert(document.querySelector('.context-answer').textContent.includes('[S1]'),'answer not rendered');
+   assert(document.querySelector('.agent-message.assistant .agent-message-body')?.textContent.includes('[S1]'),'answer not rendered');
    contextModal();document.querySelector('#contextModal').classList.add('open');
    document.querySelector('[data-source-tab="upload"]').click();
    const existingCount=state.papers.length,upload=document.querySelector('.context-upload input');
@@ -79,6 +82,6 @@ app.whenReady().then(async()=>{
    assert(document.querySelector('#detachedReader canvas').width>0,'Detached PDF canvas missing');
   })()`);
   console.log('PASS: PDF reader, annotations, multi-note and paragraph context, whole PDF text, selected highlights, request payload, context upload deduplication');
-  app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

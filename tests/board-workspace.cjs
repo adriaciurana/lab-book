@@ -1,10 +1,13 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-board-workspace-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1500,height:1100});
  win.webContents.on('console-message',event=>{if(event.level==='error')console.error(event.message)});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/inbox?isolated=1');
+  workspace=await startWorkspaceServer({demo:true});
+  await win.loadURL(workspace.origin+'/inbox?isolated=1');
   const result=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,80));
    state={folders:[{id:'inbox',name:'Inbox'}],notes:[{id:'project-a',title:'Video project',folder:'inbox'},{id:'stream-a',title:'Temporal consistency',parentNoteId:'project-a',template:'research',folder:'inbox'},{id:'protocol-a',title:'Evaluation protocol',parentNoteId:'stream-a',folder:'inbox'},{id:'project-b',title:'Language project',folder:'inbox'},{id:'stream-b',title:'Alignment',parentNoteId:'project-b',template:'research',folder:'inbox'}],boards:[{id:'a',name:'Video experiments',noteId:'stream-a',columns:['Queue','Running','Done']},{id:'b',name:'Alignment work',noteId:'stream-b',columns:['Todo','Working','Done']}],tasks:[{id:'a1',text:'Read temporal paper',type:'task',board:'a',col:'Queue',noteId:'protocol-a',tags:['reading'],tag:'reading'},{id:'a2',text:'Run temporal ablation',type:'subtask',parentId:'a1',board:'a',col:'Running',tag:'experiment',tags:['experiment']},{id:'b1',text:'Read alignment paper',type:'task',board:'b',col:'Todo',noteId:'stream-b',tag:'reading',tags:['reading']},{id:'b2',text:'Measure reward quality',type:'task',board:'b',col:'Working',tag:'experiment',tags:['experiment']}],papers:[],context:[],boardViews:[{id:'all',name:'All research',boardIds:['a','b'],columnMap:{a:{Queue:'Backlog',Running:'Active'},b:{Todo:'Backlog',Working:'Active'}}}]};ResearchModel.ensure(state);currentView='board-view';window.activeBoardView='all';render();
@@ -47,6 +50,7 @@ app.whenReady().then(async()=>{
   fs.writeFileSync('/tmp/labbook-boards-combined.png',(await win.webContents.capturePage()).toPNG());
   await win.webContents.executeJavaScript(`document.querySelector('[data-board-mode="individual"]').click();applyTheme('light');new Promise(r=>setTimeout(r,100))`);
   fs.writeFileSync('/tmp/labbook-boards-individual.png',(await win.webContents.capturePage()).toPNG());
-  console.log('PASS: unified board navigation, distinct stable stream borders, inherited stream identity, project/stream/tag/type/search filters, legend filtering, scoped task creation, filtered drag/drop, compatible mode switching, URL persistence/reload');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: unified board navigation, distinct stable stream borders, inherited stream identity, project/stream/tag/type/search filters, legend filtering, scoped task creation, filtered drag/drop, compatible mode switching, URL persistence/reload');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

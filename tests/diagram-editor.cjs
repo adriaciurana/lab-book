@@ -1,10 +1,13 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-diagrams-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1500,height:1100});
  win.webContents.on('console-message',event=>{if(event.level==='error')console.error(event.message)});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/inbox?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/inbox?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,120));
    openEditor();const noteId=activeNoteId;openArchitectureComposer();
@@ -81,6 +84,7 @@ app.whenReady().then(async()=>{
    await new Promise(resolve=>setTimeout(resolve,250));
   })()`);
   fs.writeFileSync('/tmp/labbook-diagram-mobile.png',(await win.webContents.capturePage()).toPNG());
-  console.log('PASS: visual templates, labels/links/colors, drag/resize, undo/redo, duplicate/delete, connectors, image upload, AI adapters/failure, autosave/reopen, editable SVG import');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: visual templates, labels/links/colors, drag/resize, undo/redo, duplicate/delete, connectors, image upload, AI adapters/failure, autosave/reopen, editable SVG import');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

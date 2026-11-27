@@ -42,7 +42,7 @@
 .hub-branch-card[data-run-status="trained"]{border-left-color:#65b98c}
 .hub-branch-card[data-run-status="failed"]{border-left-color:#e17979}
 .hub-branch-card[data-run-status="cancelled"]{border-left-color:#949da8;border-left-style:dashed}
-.hub-branch-card{width:220px;height:180px;min-height:180px;max-height:none;overflow:hidden;padding:12px;border-radius:12px;gap:5px;background:var(--panel);box-shadow:0 3px 10px #00000008}
+.hub-branch-card{width:220px;height:204px;min-height:204px;max-height:none;overflow:hidden;padding:12px;border-radius:12px;gap:5px;background:var(--panel);box-shadow:0 3px 10px #00000008}
 .hub-branch-card.is-focused{outline:2px solid var(--accent);outline-offset:3px}.hub-repo-root{background:var(--soft);justify-content:center;gap:12px;border-style:dashed}
 .hub-repo-root>a{color:var(--ink);text-decoration:none;font-size:14px;overflow-wrap:anywhere}.hub-repo-root>small{font-size:11px}.hub-repo-root>.text-btn{font-size:11px}
 .git-card-eyebrow{font-size:9px;letter-spacing:1px;color:var(--muted)}

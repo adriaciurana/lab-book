@@ -1,8 +1,11 @@
 const {app,BrowserWindow}=require('electron');
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:390,height:844,useContentSize:true});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/papers?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/papers?isolated=1');
   for(const width of [390,320,700]){
    win.setContentSize(width,844);
    await win.webContents.executeJavaScript(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
@@ -21,6 +24,7 @@ app.whenReady().then(async()=>{
   }
   win.setContentSize(1200,900);await win.webContents.executeJavaScript(`new Promise(r=>setTimeout(r,50))`);
   await win.webContents.executeJavaScript(`if(document.querySelector('.sidebar').inert)throw Error('Desktop navigation remains inert')`);
-  console.log('PASS: mobile drawer, backdrop, Escape, navigation, paper-bank width at 320/390/700px and desktop recovery');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: mobile drawer, backdrop, Escape, navigation, paper-bank width at 320/390/700px and desktop recovery');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

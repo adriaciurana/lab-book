@@ -1,9 +1,12 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-sidebar-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1350,height:800});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/inbox?isolated=1');
+  workspace=await startWorkspaceServer({demo:true});
+  await win.loadURL(workspace.origin+'/inbox?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,60));
    state=await(await fetch('/api/state')).json();ResearchModel.ensure(state);currentView='inbox';currentFolder='inbox';render();await tick();
@@ -21,7 +24,7 @@ app.whenReady().then(async()=>{
     list.querySelector('[data-tree-toggle="folder:demo-workspace"]').click();
     openExperimentEditor();await tick();
     const selects=[...document.querySelectorAll('#composerModal .hub-form-grid select')];assert(selects.length===5,'experiment selectors missing');
-    for(const select of selects){const style=getComputedStyle(select),label=select.parentElement,rect=select.getBoundingClientRect();assert(style.appearance==='none','native border/arrow still visible');assert(parseFloat(style.borderRadius)>=10,'select radius missing');assert(rect.height>=44,'select too short');assert(rect.width>=label.clientWidth-2,'select not full width');assert(style.backgroundImage!=='none','custom chevron missing');assert(style.color!=='rgb(0, 0, 0)'||theme==='light','dark text invisible')}
+    for(const select of selects){const style=getComputedStyle(select),label=select.parentElement,rect=select.getBoundingClientRect();assert(style.appearance==='auto','native select behavior changed');assert(parseFloat(style.borderRadius)>=10,'select radius missing');assert(rect.height>=44,'select too short');assert(rect.width>=label.clientWidth-2,'select not full width');assert(style.backgroundImage==='none','native select has a duplicate chevron');assert(style.color!=='rgb(0, 0, 0)'||theme==='light','dark text invisible')}
     const repo=document.querySelector('#hubRunRepo');repo.value='demo-video-repo';repo.dispatchEvent(new Event('change'));const branch=document.querySelector('#hubRunBranch');assert(branch.options.length===6,'repository-dependent branch selection broken');
     closeComposer();
    }
@@ -33,6 +36,7 @@ app.whenReady().then(async()=>{
   await win.setSize(1350,900);
   await win.webContents.executeJavaScript(`openExperimentEditor();new Promise(r=>setTimeout(r,120))`);
   fs.writeFileSync('/tmp/labbook-selectors-fixed.png',(await win.webContents.capturePage()).toPNG());
-  console.log('PASS: nonoverlapping sidebar rows, single scroll, folder/page collapse, active page reveal, small-height layout, styled native selects in both themes and dependent branch choices');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: nonoverlapping sidebar rows, single scroll, folder/page collapse, active page reveal, small-height layout, styled native selects in both themes and dependent branch choices');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

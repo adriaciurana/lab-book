@@ -1,10 +1,13 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-columns-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1450,height:1050});
  win.webContents.on('console-message',event=>{if(event.level==='error')console.error(event.message)});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/experiments?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/experiments?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,80));
    state={folders:[{id:'inbox',name:'Inbox',icon:'inbox'}],notes:[],papers:[],context:[],boards:[],tasks:[],experiments:[{id:'a',name:'Ablation A',status:'trained',metrics:{loss:.2},config:{seed:42,enabled:false}},{id:'b',name:'Baseline B',status:'trained',metrics:{loss:.1},config:{seed:43,enabled:true}},{id:'c',name:'Planned C',status:'planned',metrics:{},config:{}}]};ResearchModel.ensure(state);currentView='experiments';render();
@@ -57,6 +60,7 @@ app.whenReady().then(async()=>{
   const ready=new Promise(r=>win.webContents.once('did-finish-load',r));win.webContents.reload();await ready;
   await win.webContents.executeJavaScript(`(async()=>{if(!state.tableSchemas.length||state.experiments.find(r=>r.id==='a').metrics.quality!=='high')throw Error('schema or typed values lost after reload');applyTheme('dark');openColumnEditor();await new Promise(r=>setTimeout(r,120))})()`);
   fs.writeFileSync('/tmp/labbook-column-editor.png',(await win.webContents.capturePage()).toPNG());
-  console.log('PASS: schema editing, labels/units/precision, min/max objectives, best value, typed legacy fields, nested editor draft preservation, ordinal sorting, missing values, validation, hide without deletion, reload');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: schema editing, labels/units/precision, min/max objectives, best value, typed legacy fields, nested editor draft preservation, ordinal sorting, missing values, validation, hide without deletion, reload');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

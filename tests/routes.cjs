@@ -1,13 +1,16 @@
 const {app,BrowserWindow}=require('electron');
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,webPreferences:{partition:'routes-regression'}});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4173/papers?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/papers?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,80));
    assert(document.querySelector('.paper-bank'),'direct section URL failed');
    document.querySelector('[data-view="skills"]').click();assert(location.pathname==='/skills','skills URL unchanged');
-   document.querySelector('[data-view="search"]').click();assert(location.pathname==='/research','research URL unchanged');
+   document.querySelector('[data-view="search"]').click();assert(location.pathname==='/agent','agent URL unchanged');
    document.querySelector('#newPageBtn').click();const id=activeNoteId;assert(location.pathname==='/notes/'+id,'note lacks deep link');
    insertEditorHTML('<p>Persisted through routes</p>');
    document.querySelector('[data-view="papers"]').click();assert(location.pathname==='/papers','bank URL unchanged');
@@ -29,6 +32,6 @@ app.whenReady().then(async()=>{
   const restored=await win.webContents.executeJavaScript("Boolean(document.querySelector('.paper-bank'))");
   if(!restored)throw Error('deep link reload failed');
   console.log('PASS: direct URLs, note routes and persistence, browser back/forward, paper guides, optional upload guide, deep-link reload');
-  app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

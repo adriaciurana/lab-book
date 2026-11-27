@@ -1,10 +1,13 @@
 // Real Chromium DOM, isolated browser partition. Does not read the user's workspace.
 const {app,BrowserWindow}=require('electron');
 const assert=require('node:assert/strict');
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,webPreferences:{partition:'persistence-regression'}});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4173/?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/?isolated=1');
   const result=await win.webContents.executeJavaScript(`(async()=>{
    const tick=()=>new Promise(resolve=>setTimeout(resolve,20));
    const assert=(condition,message)=>{if(!condition)throw Error(message)};
@@ -98,6 +101,6 @@ app.whenReady().then(async()=>{
   })()`);
   assert.equal(restored,true,'reload lost paper');
   console.log('PASS: immediate navigation, reopen, manual versions, DOM edits, rollback, duplicate titles, real paper picker, inserted images, storage failure + retry, reload');
-  app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

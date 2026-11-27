@@ -1,12 +1,15 @@
 const {app,BrowserWindow}=require('electron');
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
- const win=new BrowserWindow({show:false,width:1440,height:1000,webPreferences:{partition:'appearance-regression'}});
+ const win=new BrowserWindow({show:false,width:1440,height:1000,webPreferences:{partition:'appearance-regression',backgroundThrottling:false}});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4173/papers?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/papers?isolated=1');
   const result=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(value,message)=>{if(!value)throw Error(message)},tick=()=>new Promise(r=>setTimeout(r,30)),checks=[];
-   state=await(await fetch('/api/state')).json();renderFolders();
+   state.papers=[{id:'contrast-paper',title:'Contrast fixture',authors:'Lab Book',tags:['Diffusion']}];renderFolders();
    const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d',{willReadFrequently:true});
    const rgb=color=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data]};
    const mix=(top,bottom)=>{const a=top[3]/255;return [0,1,2].map(i=>top[i]*a+bottom[i]*(1-a)).concat(255)};
@@ -43,6 +46,6 @@ app.whenReady().then(async()=>{
   fs.writeFileSync(path.join(directory,'light-library.png'),(await win.webContents.capturePage()).toPNG());
   console.log('PASS: '+result.checks+' text contrast checks, both themes, all main sections, icons, folder alignment, modal/editor readability');
   console.log('Screenshots: '+directory);
-  app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

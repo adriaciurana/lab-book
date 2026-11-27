@@ -1,10 +1,13 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-research-polish-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1450,height:1100});
  win.webContents.on('console-message',event=>{if(event.level==='error')console.error(event.message)});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/inbox?isolated=1');
+  workspace=await startWorkspaceServer();
+  await win.loadURL(workspace.origin+'/inbox?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,100));
    const favicon=document.querySelector('link[rel="icon"]');assert(favicon&&favicon.href.includes('favicon.svg'),'favicon absent');const icon=await fetch(favicon.href);assert(icon.ok&&icon.headers.get('content-type').includes('image/svg+xml'),'favicon MIME invalid');assert((await icon.text()).includes('M5 3h14v18H5'),'favicon is not the app logo');
@@ -26,10 +29,11 @@ app.whenReady().then(async()=>{
   })()`);
   const loaded=new Promise(r=>win.webContents.once('did-finish-load',r));win.webContents.reload();await loaded;
   const result=await win.webContents.executeJavaScript(`({scope:window.hubExperimentPage,rows:document.querySelectorAll('[data-run-row]').length})`);if(result.scope!=='root'||result.rows!==2)throw Error('Scoped URL did not survive reload');
-  await win.webContents.executeJavaScript(`(async()=>{state=await(await fetch('/api/state')).json();ResearchModel.ensure(state);applyTheme('dark');window.hubExperimentPage='demo-video';currentView='experiments';render();await new Promise(r=>setTimeout(r,150))})()`);
+  await win.webContents.executeJavaScript(`(async()=>{applyTheme('dark');window.hubExperimentPage='root';currentView='experiments';render();await new Promise(r=>setTimeout(r,150))})()`);
   fs.writeFileSync('/tmp/labbook-results-polished.png',(await win.webContents.capturePage()).toPNG());
   await win.webContents.executeJavaScript(`(async()=>{history.replaceState({},'','/repositories?isolated=1');currentView='repositories';render();await new Promise(r=>setTimeout(r,150))})()`);
   fs.writeFileSync('/tmp/labbook-git-polished.png',(await win.webContents.capturePage()).toPNG());
-  console.log('PASS: logo favicon/MIME, connected note/child/task/experiment/repository navigation, branch context, inherited run defaults, Markdown copy, hidden empty columns, safe task edits, compact Git cards, scoped reload, contrast in both themes');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: logo favicon/MIME, connected note/child/task/experiment/repository navigation, branch context, inherited run defaults, Markdown copy, hidden empty columns, safe task edits, compact Git cards, scoped reload, contrast in both themes');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });

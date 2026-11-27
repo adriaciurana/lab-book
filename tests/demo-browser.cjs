@@ -1,10 +1,13 @@
 const {app,BrowserWindow}=require('electron');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-demo-browser-')));
+const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,width:1500,height:1100,webPreferences:{partition:'demo-verification'}});
+ let workspace;
  try{
-  await win.loadURL('http://localhost:4175/notes/demo-home');
+  workspace=await startWorkspaceServer({demo:true});
+  await win.loadURL(workspace.origin+'/notes/demo-home');
   const summary=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,100));
    assert(window.LABBOOK_ENV==='test','Not TEST');openEditor(state.notes.find(n=>n.id==='demo-home'));await tick();assert(document.querySelector('.editor-body').textContent.includes('MOCK DATA'),'Demo start page missing');
@@ -53,6 +56,7 @@ app.whenReady().then(async()=>{
    assert(picked&&picked.checked===(original==='false'),'PDF selection did not reach the context picker');
    return {notes:state.notes.filter(n=>n.mock).length,tasks:state.tasks.filter(n=>n.mock).length,experiments:state.experiments.filter(n=>n.mock).length,papers:state.papers.filter(n=>n.mock).length};
   })()`);
-  console.log('PASS: real TEST demo pages, live embeds, selectable local PDF, saved highlights, galleries, task views, experiments, branches, drafts and context',summary);app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: real TEST demo pages, live embeds, selectable local PDF, saved highlights, galleries, task views, experiments, branches, drafts and context',summary);
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await workspace?.close();app.exit(process.exitCode||0)}
 });
