@@ -117,6 +117,24 @@ app.whenReady().then(async()=>{
   })()`);
   await win.loadURL(page);
   await win.webContents.executeJavaScript(`if(document.querySelector('.editor-body').textContent!=='Updated result')throw Error('The administrator did not see the member edit')`);
+  await win.webContents.executeJavaScript(`(async()=>{
+   const settings=document.querySelector('[data-account-settings]');
+   settings.click();
+   const wait=async get=>{
+    for(let i=0;i<100;i++){
+     const value=get();
+     if(value)return value;
+     await new Promise(resolve=>setTimeout(resolve,25));
+    }
+    throw Error('Password update did not finish');
+   };
+   const form=await wait(()=>document.querySelector('form:has(input[name=current])'));
+   form.elements.current.value='permanent admin password';
+   form.elements.password.value='updated admin password';
+   form.requestSubmit();
+   await wait(()=>document.querySelector('[data-managed-account-settings] [role=status]')?.textContent.startsWith('Password updated.'));
+   if(form.elements.password.value)throw Error('Password field was not cleared');
+  })()`);
   console.log('PASS: sign-in, AI policy, member creation, private pages, sharing as viewer or editor, and synchronization across two browser sessions');
  }catch(error){console.error(error);process.exitCode=1}
  finally{memberWin?.destroy();win?.destroy();await new Promise(resolve=>server.close(resolve));fs.rmSync(root,{recursive:true,force:true});app.exit(process.exitCode||0)}

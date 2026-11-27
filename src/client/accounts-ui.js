@@ -97,10 +97,21 @@
     catch(error){panel.status(error.message)}
    };
   }
+  const passwordForm=document.createElement('form');
+  passwordForm.innerHTML='<h3>Change password</h3><label>Current password<input name="current" type="password" autocomplete="current-password" required></label><label>New password<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><button class="btn ghost">Update password</button>';
+  content.append(passwordForm);
   const logout=document.createElement('button');logout.type='button';logout.className='btn ghost';logout.textContent='Sign out';content.append(logout);
   const panel=dialog('Account settings',content);
   panel.backdrop.dataset.managedAccountSettings='';
   panel.status(configuration.setupRequired?'Choose how this workspace will use AI before sending chat requests.':configuration.configured?'AI credential configured.':'No AI credential configured for this account.');
+  passwordForm.onsubmit=async event=>{
+   event.preventDefault();
+   try{
+    await api('password',Object.fromEntries(new FormData(passwordForm)));
+    passwordForm.reset();
+    panel.status('Password updated. Other sessions have been signed out.');
+   }catch(error){panel.status(error.message)}
+  };
   logout.onclick=async()=>{try{if(!flushDraft())return;await api('logout',{});location.reload()}catch(error){panel.status(error.message)}};
   form.onsubmit=async event=>{
    event.preventDefault();
