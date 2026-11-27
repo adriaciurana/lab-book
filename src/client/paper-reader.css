@@ -31,3 +31,12 @@
 .detached-reader-layout>header strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.detached-reader-layout>header a{white-space:nowrap;color:var(--muted);font-size:12px}
 .detached-reader-layout>.paper-side-body.local-reader{height:auto;flex:1;min-height:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .reader-controls .reader-highlight-picker{max-width:240px;min-width:130px;width:auto;font-size:11px;padding:6px 28px 6px 8px;border:1px solid var(--line);border-radius:6px;background-color:var(--panel);color:var(--ink)}
+
+.reader-select-highlights .reader-highlight{
+ pointer-events:auto;cursor:pointer;padding:0;border:0;border-bottom:2px solid #8ba948;border-radius:0;
+}
+.reader-select-highlights .reader-highlight:hover,
+.reader-select-highlights .reader-highlight:focus-visible{outline:2px solid #184e97}
+.reader-select-highlights .reader-highlight[aria-pressed="true"]{background:#4e9df999;border-bottom-color:#184e97}
+.reader-select-highlights .reader-annotation button[aria-pressed="true"]{background:var(--selection);color:var(--accent-ink)}
+.reader-select-highlights .reader-selection[hidden]{display:none}

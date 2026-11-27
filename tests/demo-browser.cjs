@@ -39,6 +39,18 @@ app.whenReady().then(async()=>{
    const showcase=state.notes.find(n=>n.id==='showcase-diffusion');
    assert(showcase?.published?.content.includes('Evaluation protocol'),'Published showcase missing');
    assert(state.experiments.filter(run=>run.id.startsWith('showcase-')).every(run=>state.branches.some(branch=>branch.id===run.branchId&&branch.repoId===run.repoId)),'Showcase run has no matching branch');
+   document.querySelector('#addContext').click();
+   document.querySelector('[data-source-tab="papers"]').click();
+   document.querySelector('[data-context-key="paper:demo-paper-video"]').closest('.context-source-row').querySelector('button').click();
+   for(let i=0;i<30&&!document.querySelector('.context-preview button.reader-highlight');i++)await tick();
+   const highlight=document.querySelector('.context-preview button.reader-highlight');
+   assert(highlight,'PDF highlight is not clickable');
+   const original=highlight.getAttribute('aria-pressed');
+   highlight.click();
+   assert(highlight.getAttribute('aria-pressed')!==original,'Click did not toggle highlight');
+   document.querySelector('[data-pick-highlights]').click();
+   const picked=document.querySelector('[data-context-key="region:demo-paper-video:demo-paper-video-highlight"]');
+   assert(picked&&picked.checked===(original==='false'),'PDF selection did not reach the context picker');
    return {notes:state.notes.filter(n=>n.mock).length,tasks:state.tasks.filter(n=>n.mock).length,experiments:state.experiments.filter(n=>n.mock).length,papers:state.papers.filter(n=>n.mock).length};
   })()`);
   console.log('PASS: real TEST demo pages, live embeds, selectable local PDF, saved highlights, galleries, task views, experiments, branches, drafts and context',summary);app.exit(0);

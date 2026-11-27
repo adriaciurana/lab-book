@@ -75,8 +75,21 @@ function contextModal(){
    const row=document.createElement('div');row.className='context-source-row';
    row.append(check(item,item.label,item.detail+(tab==='regions'?' · '+item.text.slice(0,240):'')));
    if(tab==='papers'){
-    const read=document.createElement('button');read.className='text-btn';read.textContent='Read & highlight';
-    read.onclick=()=>previewContextPaper(state.papers.find(p=>p.id===item.paperId),()=>{tab='regions';modal.querySelectorAll('[data-source-tab]').forEach(b=>b.classList.toggle('active',b.dataset.sourceTab===tab));draw()});
+    const read=document.createElement('button');read.className='text-btn';read.textContent='Select highlights in PDF';
+    read.onclick=()=>{
+     const paper=state.papers.find(p=>p.id===item.paperId);
+     const regions=contextCandidates().filter(source=>source.type==='region'&&source.paperId===paper.id);
+     const selected=new Set(regions.filter(source=>picked.has(source.key)).map(source=>source.regionId));
+     previewContextPaper(paper,selected,ids=>{
+      for(const source of regions){
+       if(ids.has(source.regionId))picked.set(source.key,source);
+       else picked.delete(source.key);
+      }
+      tab='regions';
+      modal.querySelectorAll('[data-source-tab]').forEach(button=>button.classList.toggle('active',button.dataset.sourceTab===tab));
+      draw();count();
+     });
+    };
     row.append(read);
    }
    list.append(row);
@@ -180,12 +193,22 @@ proxySearch=async function(){
 };
 const contentObserver=new MutationObserver(renderContextUI);
 contentObserver.observe(document.querySelector('#content'),{childList:true,subtree:true});
-async function previewContextPaper(paper,onClose){
+async function previewContextPaper(paper,selected,onApply){
  const overlay=document.createElement('div');overlay.className='modal-backdrop open';
- overlay.innerHTML='<section class="context-preview"><header><strong></strong><button class="btn primary" data-pick-highlights>Choose highlights</button><button class="btn ghost" data-close-preview>×</button></header><div class="paper-side-body">Preparing local paper…</div></section>';
+ overlay.innerHTML='<section class="context-preview"><header><strong></strong><button class="btn primary" data-pick-highlights>Use highlights</button><button class="btn ghost" data-close-preview>×</button></header><div class="paper-side-body">Preparing local paper…</div></section>';
  overlay.querySelector('strong').textContent=paper.title;document.body.append(overlay);
- overlay.querySelector('[data-close-preview]').onclick=()=>overlay.remove();
- overlay.querySelector('[data-pick-highlights]').onclick=()=>{overlay.remove();onClose()};
+ const apply=overlay.querySelector('[data-pick-highlights]');
+ const update=()=>{apply.textContent='Use highlights ('+selected.size+')'};
+ const close=()=>overlay.remove();
+ overlay.querySelector('[data-close-preview]').onclick=close;
+ overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();close()}});
+ apply.onclick=()=>{close();onApply(selected)};
+ update();
  const body=overlay.querySelector('.paper-side-body');
- try{await mountPaperReader(body,paper,await ensureLocalPaper(paper))}catch(error){body.textContent=error.message}
+ try{
+  await mountPaperReader(body,paper,await ensureLocalPaper(paper),{
+   selected,
+   toggle(id){if(selected.has(id))selected.delete(id);else selected.add(id);update()}
+  });
+ }catch(error){body.textContent=error.message}
 }

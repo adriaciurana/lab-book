@@ -1,11 +1,13 @@
 let localPdfLibrary;
-async function mountPaperReader(container,paper,url){
+async function mountPaperReader(container,paper,url,highlightSelection){
  const lib=localPdfLibrary||await import('/vendor/pdf.mjs');
  localPdfLibrary=lib;lib.GlobalWorkerOptions.workerSrc='/vendor/pdf.worker.mjs';
  const loading=lib.getDocument({url});
  const pdf=await loading.promise;if(!container.isConnected){pdf.destroy();return}
  container.classList.add('local-reader');
+ if(highlightSelection)container.classList.add('reader-select-highlights');
  container.innerHTML='<div class="reader-controls"><button data-prev title="Previous page">←</button><input data-page type="number" min="1" aria-label="Page"><span data-count></span><button data-next title="Next page">→</button><span class="reader-gap"></span><button data-minus title="Zoom out">−</button><span data-zoom></span><button data-plus title="Zoom in">＋</button><button data-fit>Fit width</button><button data-popout title="Open reader in a new window">↗ New window</button><a data-download download>↓ PDF</a></div><div class="reader-scroll"><div class="reader-sheet"><canvas></canvas><div class="textLayer"></div><div class="reader-highlights"></div></div></div><div class="reader-selection"><span data-hint>Select text to highlight it</span><button data-highlight disabled>Highlight</button><button data-link disabled>Link to note</button></div><div class="reader-annotations"></div>';
+ if(highlightSelection)container.querySelector('.reader-selection').hidden=true;
  const q=s=>container.querySelector(s),sheet=q('.reader-sheet'),scroll=q('.reader-scroll');
  q('[data-download]').href=url;q('[data-download]').download=paper.fileName||'paper.pdf';
  const readerQuery=new URLSearchParams(location.search);
@@ -17,9 +19,23 @@ async function mountPaperReader(container,paper,url){
  function paintHighlights(){
   highlightPicker.replaceChildren(new Option('Highlights ('+paper.highlights.length+')',''));for(const h of paper.highlights)highlightPicker.add(new Option('p. '+h.pageNumber+' · '+(h.label||h.text.slice(0,55)),h.id));highlightPicker.disabled=!paper.highlights.length;
   q('.reader-highlights').replaceChildren();
+  function selectHighlight(button,region){
+   button.setAttribute('aria-pressed',String(highlightSelection.selected.has(region.id)));
+   button.onclick=()=>{
+    highlightSelection.toggle(region.id);
+    const pressed=String(highlightSelection.selected.has(region.id));
+    for(const control of container.querySelectorAll('button[data-region-id="'+CSS.escape(region.id)+'"]'))control.setAttribute('aria-pressed',pressed);
+   };
+  }
   for(const h of paper.highlights.filter(h=>h.pageNumber===pageNumber)){
-   for(const r of h.rects){
-    const mark=document.createElement('div');mark.className='reader-highlight';mark.dataset.regionId=h.id;
+   for(const [index,r] of h.rects.entries()){
+    const mark=document.createElement(highlightSelection?'button':'div');
+    mark.className='reader-highlight';mark.dataset.regionId=h.id;
+    if(highlightSelection){
+     mark.type='button';mark.tabIndex=index===0?0:-1;
+     mark.setAttribute('aria-label',h.label||h.text);
+     selectHighlight(mark,h);
+    }
     mark.style.cssText=`left:${r.x*100}%;top:${r.y*100}%;width:${r.w*100}%;height:${r.h*100}%`;
     q('.reader-highlights').append(mark);
    }
@@ -31,7 +47,11 @@ async function mountPaperReader(container,paper,url){
    const link=document.createElement('button');link.textContent='Link';link.onclick=()=>linkRegion(h);
    const remove=document.createElement('button');remove.textContent='×';remove.title='Delete highlight';
    remove.onclick=()=>{paper.highlights=paper.highlights.filter(x=>x.id!==h.id);save();paintHighlights()};
-   row.append(quote,link,remove);list.append(row);
+   if(highlightSelection){
+    const choose=document.createElement('button');choose.type='button';choose.textContent='Select highlight';choose.dataset.regionId=h.id;
+    selectHighlight(choose,h);row.append(quote,choose);
+   }else row.append(quote,link,remove);
+   list.append(row);
   }
  }
  function capture(){
