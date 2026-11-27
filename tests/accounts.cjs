@@ -38,14 +38,30 @@ test('configured workspace requires sign-in and password rotation before exposin
     headers:{...(body&&{'Content-Type':'application/json'}),...(cookie&&{Cookie:cookie})},
     ...(body&&{body:JSON.stringify(body)})
   });
-  const throughProxy = route => new Promise((resolve,reject)=>{
-    require('node:http').get(base+route,{headers:{Host:'lab-book.local'}},response=>{
+  const throughProxy = (route,scheme,body) => new Promise((resolve,reject)=>{
+    const headers={Host:'lab-book.local','X-Forwarded-Proto':scheme,...(body&&{'Content-Type':'application/json'})};
+    const req=require('node:http').request(base+route,{method:body?'POST':'GET',headers},response=>{
       response.resume();
-      resolve(response.statusCode);
-    }).on('error',reject);
+      resolve(response);
+    });
+    req.on('error',reject);
+    req.end(body&&JSON.stringify(body));
   });
-  assert.equal(await throughProxy('/'),426);
-  assert.equal(await throughProxy('/api/health'),200);
+  assert.equal((await throughProxy('/','http')).statusCode,426);
+  assert.equal((await throughProxy('/','https')).statusCode,426);
+  assert.equal((await throughProxy('/api/health','http')).statusCode,200);
+  const priorHttps=process.env.LABBOOK_HTTPS;
+  process.env.LABBOOK_HTTPS='1';
+  try{
+    assert.equal((await throughProxy('/','http')).statusCode,426);
+    const credentials={username:'admin',password:'temporary password'};
+    const proxiedLogin=await throughProxy('/api/account/login','https',credentials);
+    assert.equal(proxiedLogin.statusCode,200);
+    assert.match(proxiedLogin.headers['set-cookie'][0],/; Secure/);
+  }finally{
+    if(priorHttps===undefined)delete process.env.LABBOOK_HTTPS;
+    else process.env.LABBOOK_HTTPS=priorHttps;
+  }
   assert.equal((await request('/bootstrap.js')).status,401);
   const login = await request('/api/account/login',{username:'admin',password:'temporary password'});
   assert.equal(login.status,200);

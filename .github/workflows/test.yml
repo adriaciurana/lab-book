@@ -11,3 +11,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:coverage
+      - run: xvfb-run -a env -u ELECTRON_RUN_AS_NODE ./node_modules/.bin/electron --no-sandbox tests/accounts-ui.cjs

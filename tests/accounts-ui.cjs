@@ -30,6 +30,12 @@ app.whenReady().then(async()=>{
   }
   await submit(win,{username:'admin',password:'initial admin password'});
   await submit(win,{current:'initial admin password',password:'permanent admin password'});
+  let authorization;
+  win.webContents.once('will-navigate',(event,url)=>{
+   if(new URL(url).origin===base)return;
+   event.preventDefault();
+   authorization=new URL(url);
+  });
   await win.webContents.executeJavaScript(`(async()=>{
    const wait=async selector=>{
     for(let i=0;i<80;i++){
@@ -46,10 +52,11 @@ app.whenReady().then(async()=>{
    member.elements.username.value='member-ui';member.elements.password.value='initial member password';
    member.requestSubmit();
    await wait(()=>[...document.querySelectorAll('[aria-label="Workspace members"] li')].find(row=>row.textContent.includes('member-ui')));
-   const result=await fetch('/api/account/chatgpt',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   const payload=await result.json();
-   if(!result.ok||new URL(payload.url).hostname!=='auth.openai.com')throw Error('ChatGPT login did not start');
+   connect.click();
+   if(!connect.disabled)throw Error('The authorization button did not show its pending state');
   })()`);
+  for(let i=0;i<100&&!authorization;i++)await new Promise(resolve=>setTimeout(resolve,25));
+  if(authorization?.origin!=='https://auth.openai.com')throw Error('Clicking Continue with ChatGPT did not start authorization');
   await win.loadURL(base+'/agent');
   await win.webContents.executeJavaScript(`(async()=>{
    const wait=async selector=>{
