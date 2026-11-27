@@ -33,7 +33,7 @@ function diagramBase64(text){const bytes=new TextEncoder().encode(text);let resu
 function diagramFromMarkup(markup){
  const doc=new DOMParser().parseFromString(markup,'image/svg+xml'),svg=doc.documentElement;
  if(svg.localName!=='svg'||doc.querySelector('parsererror'))return null;
- if(svg.dataset.labbookDiagram){try{return DiagramModel.validate(JSON.parse(decodeURIComponent(svg.dataset.labbookDiagram)))}catch{}}
+ if(svg.dataset.labbookDiagram){try{return DiagramModel.validate(JSON.parse(decodeURIComponent(svg.dataset.labbookDiagram)))}catch{svg.removeAttribute('data-labbook-diagram')}}
  const scene=DiagramModel.empty(),view=(svg.getAttribute('viewBox')||'').split(/[ ,]+/).map(Number);scene.width=Math.max(200,Math.min(5000,view[2]||parseFloat(svg.getAttribute('width'))||1100));scene.height=Math.max(200,Math.min(5000,view[3]||parseFloat(svg.getAttribute('height'))||650));
  // Imported SVG is never executed in the parent. Unsupported artwork is kept as an image layer.
  svg.querySelectorAll('script,style,foreignObject,iframe,object,embed,animate,set').forEach(e=>e.remove());
@@ -78,11 +78,15 @@ function openVisualDiagramEditor(existing=null){
   if(uploadControl){const input=q('diagramImageInput'),button=document.createElement('button');button.type='button';button.className=uploadControl.className;button.textContent='Upload image / SVG';button.setAttribute('aria-label','Upload image or SVG');uploadControl.before(input);uploadControl.replaceWith(button);button.onclick=()=>input.click()}
  const status=message=>q('diagramStatus').textContent=message;
  function snapshot(){undo.push(JSON.stringify(scene));if(undo.length>30)undo.shift();redo=[]}
- function change(fn){if(q('architectureMarkup').value!==sourceValue){status('Import your SVG source changes into the canvas before editing objects. You can also save the source directly.');return false}const before=JSON.stringify(scene);snapshot();try{fn();DiagramModel.validate(scene)}catch(error){scene=JSON.parse(before);undo.pop();status(error.message);draw();properties();return false}visualChanged=true;sourceMode=false;q('diagramSourcePanel').hidden=true;q('diagramSourceToggle').setAttribute('aria-expanded','false');draw();properties();return true}
+ function change(fn){if(q('architectureMarkup').value!==sourceValue){status('Import your SVG source changes into the canvas before editing objects. You can also save the source directly.');return false}const before=JSON.stringify(scene);snapshot();try{fn();DiagramModel.validate(scene)}catch(error){scene=JSON.parse(before);undo.pop();status(error.message);draw();properties();return false}visualChanged=true;closeSource();draw();properties();return true}
  function draw(){
   const rendered=new DOMParser().parseFromString(DiagramModel.svg(scene,{editing:true,selected:selectedIds.size>1?[...selectedIds]:selected}),'image/svg+xml').documentElement;
   canvas.setAttribute('viewBox',`0 0 ${scene.width} ${scene.height}`);canvas.style.width=scene.width*zoom+'px';canvas.style.height=scene.height*zoom+'px';canvas.replaceChildren(...[...rendered.childNodes].map(n=>document.importNode(n,true)));
-  if(visualChanged&&q('architectureMarkup').value===sourceValue){sourceValue=DiagramModel.svg(scene);q('architectureMarkup').value=sourceValue}
+  if(visualChanged&&q('architectureMarkup').value===sourceValue){
+   const previous=sourceValue;
+   sourceValue=DiagramModel.svg(scene);q('architectureMarkup').value=sourceValue;
+   if(sourceDrafts.svg===previous)sourceDrafts.svg=sourceValue;
+  }
   q('diagramUndo').disabled=!undo.length;q('diagramRedo').disabled=!redo.length;
  }
  function properties(){
@@ -136,7 +140,11 @@ function openVisualDiagramEditor(existing=null){
  q('diagramUndo').onclick=()=>{if(!undo.length)return;redo.push(JSON.stringify(scene));scene=JSON.parse(undo.pop());selected=null;selectedIds.clear();visualChanged=true;draw();properties()};q('diagramRedo').onclick=()=>{if(!redo.length)return;undo.push(JSON.stringify(scene));scene=JSON.parse(redo.pop());selected=null;selectedIds.clear();visualChanged=true;draw();properties()};
  // Keep source editing next to its toolbar controls instead of below the canvas.
  const sourcePanel=q('diagramSourcePanel');
- dialog.querySelector('.diagram-workspace').before(sourcePanel);
+ const sourceControls=document.createElement('div');
+ sourceControls.className='diagram-source-controls';
+ sourceControls.append(q('diagramSourceToggle'),mermaidButton);
+ sourcePanel.before(sourceControls);
+ dialog.querySelector('.diagram-workspace').before(sourceControls,sourcePanel);
  const sourceDrafts={svg:sourceValue,mermaid:'flowchart LR\n  Input[Input patches] --> Encoder[Vision encoder]\n  Encoder --> Projector[Projector · N tokens]\n  Projector --> LLM[LLM / decoder]'};
  q('architectureMarkup').dataset.format='svg';
  const sourceLabel=q('diagramSourcePanel').querySelector('label').firstChild;
@@ -154,33 +162,84 @@ function openVisualDiagramEditor(existing=null){
     sourceFeedback.textContent='Preview · '+imported.nodes.length+' objects. Apply to edit them on the canvas.';
    }else{
     if(!/<(?:svg|div|section|article|style|p|h[1-6])\b/i.test(input.value))throw Error('Enter SVG or HTML markup. For flowchart syntax, select Mermaid.');
+    const isSvg=/^\s*(?:<\?xml[^?]*\?>\s*)?<svg\b/i.test(input.value);
+    if(isSvg&&!diagramFromMarkup(input.value))throw Error('The SVG is malformed. Check the markup before importing.');
     q('architecturePreview').replaceChildren(architectureFrame(input.value));
-    sourceFeedback.textContent='Preview · Import SVG as editable objects, or save HTML directly.';
+    sourceFeedback.textContent=isSvg?'Preview · Import supported shapes and preserve other artwork as an image layer.':'Preview · Save this HTML directly in the note.';
+    q('diagramApplySource').disabled=!isSvg;
+    return;
    }
-   q('diagramApplySource').disabled=!isMermaid&&!/^\s*<svg\b/i.test(input.value);
+   q('diagramApplySource').disabled=false;
   }catch(error){q('architecturePreview').replaceChildren();sourceFeedback.textContent=error.message;q('diagramApplySource').disabled=true}
  }
  function openSource(format){
-  const input=q('architectureMarkup');sourceDrafts[input.dataset.format||'svg']=input.value;
+  const input=q('architectureMarkup');if(sourceMode)sourceDrafts[input.dataset.format||'svg']=input.value;
   input.dataset.format=format;input.value=sourceDrafts[format];sourceMode=true;
   q('diagramSourcePanel').hidden=false;previewSource();sourcePanel.scrollIntoView({block:'nearest',behavior:'instant'});input.focus({preventScroll:true});
  }
+ function closeSource(){
+  const input=q('architectureMarkup');
+  if(sourceMode)sourceDrafts[input.dataset.format]=input.value;
+  sourceMode=false;sourcePanel.hidden=true;
+  input.dataset.format='svg';input.value=sourceValue;
+  for(const button of [mermaidButton,q('diagramSourceToggle')]){
+   button.setAttribute('aria-pressed','false');button.setAttribute('aria-expanded','false');
+  }
+ }
+ const backToCanvas=document.createElement('button');
+ backToCanvas.type='button';backToCanvas.className='btn ghost';backToCanvas.textContent='Back to canvas';
+ q('diagramApplySource').after(backToCanvas);
+ backToCanvas.onclick=()=>{closeSource();stage.focus()};
  q('diagramSourceToggle').onclick=()=>openSource('svg');
  mermaidButton.textContent='Mermaid';mermaidButton.onclick=()=>openSource('mermaid');
  q('architectureMarkup').oninput=()=>{sourceMode=true;previewSource()};
- q('diagramApplySource').onclick=()=>{const raw=q('architectureMarkup').value,imported=q('architectureMarkup').dataset.format==='mermaid'?mermaidToScene(raw):diagramFromMarkup(raw);if(!imported)return status(q('architectureMarkup').dataset.format==='mermaid'?'Unsupported Mermaid syntax. Use flowchart LR/TB with A[Label] --> B[Label].':'Visual import needs valid SVG. HTML can still be saved directly in Source mode.');snapshot();scene=imported;selected=null;sourceValue=DiagramModel.svg(scene);q('architectureMarkup').value=sourceValue;q('architectureMarkup').dataset.format='svg';sourceDrafts.svg=sourceValue;visualChanged=false;draw();properties();previewSource();status('Source imported. Objects are ready to edit.')};
- async function addImage(data,label='Image'){const img=new Image();img.src=data;await img.decode();change(()=>{const w=Math.max(40,Math.min(480,img.naturalWidth)),h=Math.max(30,w*img.naturalHeight/img.naturalWidth);const n={...DiagramModel.node(crypto.randomUUID(),label,40,40,'#fff','image'),w,h:Math.min(h,scene.height-60),image:data};scene.nodes.push(n);selected=n.id});status('Image added. Drag it or edit its dimensions.')}
+ q('diagramApplySource').onclick=()=>{
+  try{
+   const input=q('architectureMarkup');
+   const imported=input.dataset.format==='mermaid'?mermaidToScene(input.value):diagramFromMarkup(input.value);
+   if(!imported||(!imported.nodes.length&&!imported.backgroundImage))throw Error('This source contains no importable artwork.');
+   snapshot();scene=imported;selected=null;selectedIds.clear();closeSource();
+   visualChanged=true;sourceDrafts.svg=sourceValue;draw();properties();stage.focus();
+   status(imported.backgroundImage?'SVG imported. Artwork that cannot be edited is preserved as an image layer.':'Source imported. Objects are ready to edit.');
+  }catch(error){status(error.message)}
+ };
+ async function addImage(data,label='Image',canApply=()=>dialog.isConnected){const img=new Image();img.src=data;await img.decode();if(!canApply())throw Error('The diagram changed before the image could be applied.');if(change(()=>{const w=Math.max(40,Math.min(480,img.naturalWidth)),h=Math.max(30,w*img.naturalHeight/img.naturalWidth);const n={...DiagramModel.node(crypto.randomUUID(),label,40,40,'#fff','image'),w,h:Math.min(h,scene.height-60),image:data};scene.nodes.push(n);selected=n.id}))status('Image added. Drag it or edit its dimensions.')}
  async function upload(file){if(!file)return;if(file.size>8*1024*1024)throw Error('Choose an image smaller than 8 MB');if(file.type==='image/svg+xml'||/\.svg$/i.test(file.name)){const raw=await file.text(),imported=diagramFromMarkup(raw);if(!imported)throw Error('This SVG could not be read');change(()=>{scene=imported;selected=null});return}if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Upload PNG, JPEG, WebP or SVG');const reader=new FileReader(),data=await new Promise((resolve,reject)=>{reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});await addImage(data,file.name)}
  q('diagramImageInput').onchange=async e=>{try{await upload(e.target.files[0])}catch(error){status(error.message)}e.target.value=''};
  const stage=dialog.querySelector('.diagram-stage');stage.ondragover=e=>e.preventDefault();stage.ondrop=async e=>{e.preventDefault();try{await upload(e.dataTransfer.files[0])}catch(error){status(error.message)}};
  q('diagramGenerate').onclick=async()=>{
-  if(q('architectureMarkup').value!==sourceValue)return status('Import or save your source changes before generating a new figure.');const prompt=q('diagramPrompt').value.trim();if(!prompt)return status('Describe the figure to generate.');request=new AbortController();q('diagramGenerate').disabled=true;q('diagramCancelGeneration').hidden=false;status('Generating with OpenAI…');
-  try{const response=await fetch('/api/diagrams/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,mode:q('diagramGenerationMode').value}),signal:request.signal});let data;try{data=await response.json()}catch{throw Error('The server returned an unreadable response. Restart the server if needed.')}if(!response.ok)throw Error(data.error||'Generation failed');if(!dialog.isConnected)return;if(data.mode==='image')await addImage(data.image,'Generated figure');else{DiagramModel.validate(data.scene);change(()=>{scene=data.scene;selected=null})}status('Generated figure ready. Review it before saving.')}catch(error){if(dialog.isConnected)status(error.name==='AbortError'?'Generation stopped.':error.message)}finally{request=null;if(dialog.isConnected){q('diagramGenerate').disabled=false;q('diagramCancelGeneration').hidden=true}}
+  if(q('architectureMarkup').value!==sourceValue)return status('Import or save your source changes before generating a new figure.');const prompt=q('diagramPrompt').value.trim();if(!prompt)return status('Describe the figure to generate.');if(request)return;const startingScene=JSON.stringify(scene);request=new AbortController();q('diagramGenerate').disabled=true;q('diagramCancelGeneration').hidden=false;status('Generating with OpenAI…');
+  try{const response=await fetch('/api/diagrams/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,mode:q('diagramGenerationMode').value}),signal:request.signal});let data;try{data=await response.json()}catch{throw Error('The server returned an unreadable response. Restart the server if needed.')}if(!response.ok)throw Error(data.error||'Generation failed');if(!dialog.isConnected||request.signal.aborted)return;if(JSON.stringify(scene)!==startingScene||q('architectureMarkup').value!==sourceValue)throw Error('The diagram changed during generation. Generate again to use the current version.');if(data.mode==='image')await addImage(data.image,'Generated figure',()=>dialog.isConnected&&!request.signal.aborted&&JSON.stringify(scene)===startingScene);else{DiagramModel.validate(data.scene);change(()=>{scene=data.scene;selected=null})}status('Generated figure ready. Review it before saving.')}catch(error){if(dialog.isConnected)status(error.name==='AbortError'?'Generation stopped.':error.message)}finally{request=null;if(dialog.isConnected){q('diagramGenerate').disabled=false;q('diagramCancelGeneration').hidden=true}}
  };q('diagramCancelGeneration').onclick=()=>request?.abort();
  function output(){const source=q('architectureMarkup').value;if(q('architectureMarkup').dataset.format==='mermaid'){const parsed=mermaidToScene(source);if(!parsed||!parsed.nodes.length)throw Error('Correct the Mermaid flowchart before saving.');return DiagramModel.svg(parsed)}return source!==sourceValue||(!visualChanged&&original)?source:DiagramModel.svg(scene)}
  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
- q('diagramExportSvg').onclick=()=>{const raw=output();if(!raw.trim().startsWith('<svg'))return status('SVG export requires an SVG figure. Use the visual editor or SVG source.');download(new Blob([raw],{type:'image/svg+xml'}),'research-diagram.svg')};
- q('diagramExportPng').onclick=async()=>{try{const raw=output();if(!raw.trim().startsWith('<svg'))throw Error('PNG export requires an SVG figure.');const image=new Image();image.src='data:image/svg+xml;base64,'+diagramBase64(raw);await image.decode();const c=document.createElement('canvas');c.width=scene.width*2;c.height=scene.height*2;const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(image,0,0,c.width,c.height);const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob)throw Error('PNG export failed');download(blob,'research-diagram.png')}catch(error){status(error.message)}};
+ function exportSvg(){
+  const raw=output();
+  const svg=new DOMParser().parseFromString(raw,'image/svg+xml').documentElement;
+  if(svg.localName!=='svg')throw Error('Export requires a valid SVG figure.');
+  return {raw,svg};
+ }
+ q('diagramExportSvg').onclick=()=>{
+  try{download(new Blob([exportSvg().raw],{type:'image/svg+xml'}),'research-diagram.svg')}
+  catch(error){status(error.message)}
+ };
+ q('diagramExportPng').onclick=async()=>{
+  try{
+   const {raw,svg}=exportSvg();
+   const image=new Image();image.src='data:image/svg+xml;base64,'+diagramBase64(raw);await image.decode();
+   const viewBox=(svg.getAttribute('viewBox')||'').trim().split(/[ ,]+/).map(Number);
+   const width=viewBox[2]>0?viewBox[2]:image.naturalWidth,height=viewBox[3]>0?viewBox[3]:image.naturalHeight;
+   if(!width||!height)throw Error('The SVG has no usable export dimensions.');
+   const scale=Math.min(2,4096/Math.max(width,height));
+   const canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(image,0,0,canvas.width,canvas.height);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   if(!blob)throw Error('PNG export failed');
+   download(blob,'research-diagram.png');
+  }catch(error){status(error.message)}
+ };
  function close(){request?.abort();disposeAI();dialog.remove()}
  q('diagramClose').onclick=q('diagramCancel').onclick=close;
  q('insertArchitecture').onclick=()=>{try{const markup=output();if(!markup.trim())throw Error('The diagram is empty');const encoded=encodeURIComponent(markup);if(existing){existing.dataset.architecture=encoded;existing.replaceChildren();close();hydrateArchitectureBlocks();persistDraft()}else{close();insertEditorHTML(`<div contenteditable="false" class="architecture-block" data-architecture="${encoded}"></div><p><br></p>`);hydrateArchitectureBlocks();persistDraft()}}catch(error){status(error.message)}};

@@ -11,6 +11,8 @@ app.whenReady().then(async()=>{
    const vertical=mermaidToScene('flowchart TB\\nA-->B-->C');
    assert(vertical.edges.length===2&&vertical.nodes[0].y<vertical.nodes[1].y,'Vertical chained flowchart lost its layout or links');
    assert(mermaidToScene('flowchart LR\\nA --> B\\nsubgraph unsupported')===null,'Unsupported Mermaid silently discarded');
+   const artwork=diagramFromMarkup('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 250"><path d="M10 20 C 20 30 50 60 80 90"/></svg>');
+   assert(artwork.backgroundImage&&artwork.nodes.length===0,'Path-only SVG artwork was lost');
    const svgDraft=document.querySelector('#architectureMarkup').value;
    document.querySelector('.diagram-source-mode').click();
    await tick();
@@ -50,7 +52,13 @@ app.whenReady().then(async()=>{
    window.fetch=async(url,options)=>String(url)==='/api/diagrams/generate'?{ok:false,json:async()=>({error:'Generation fixture failed'})}:nativeFetch(url,options);
    const before=scene().nodes.length;document.querySelector('#diagramGenerate').click();await tick();assert(document.querySelector('#diagramStatus').textContent.includes('fixture failed')&&scene().nodes.length===before,'AI failure destroyed canvas');window.fetch=nativeFetch;
    const downloads=[],nativeClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download)downloads.push(this.download);else nativeClick.call(this)};
-   document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();await tick();await tick();assert(downloads.includes('research-diagram.svg')&&downloads.includes('research-diagram.png'),'export failed: '+document.querySelector('#diagramStatus').textContent);HTMLAnchorElement.prototype.click=nativeClick;
+   document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();await tick();await tick();assert(downloads.includes('research-diagram.svg')&&downloads.includes('research-diagram.png'),'export failed: '+document.querySelector('#diagramStatus').textContent);downloads.length=0;
+   document.querySelector('#diagramSourceToggle').click();
+   document.querySelector('#architectureMarkup').value='<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9000 100"><rect width="9000" height="100"/></svg>';
+   document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();
+   await tick();await tick();assert(downloads.length===2,'XML-prefixed SVG export failed');
+   [...document.querySelectorAll('#diagramSourcePanel button')].find(button=>button.textContent==='Back to canvas').click();
+   HTMLAnchorElement.prototype.click=nativeClick;
    document.querySelector('#insertArchitecture').click();await tick();assert(currentDraftNote().content.includes('data-architecture'),'diagram not autosaved');
    currentView='papers';render();openEditor(state.notes.find(n=>n.id===noteId));document.querySelector('.architecture-block button').click();assert(scene().nodes.length===before,'scene lost after reopen');
    assert(document.querySelector('#diagramPrompt')&&document.querySelector('#diagramImageInput'),'image/prompt tools missing on edit');
@@ -59,6 +67,20 @@ app.whenReady().then(async()=>{
    document.querySelector('#diagramTemplate').value='training';document.querySelector('#diagramTemplate').dispatchEvent(new Event('change'));await tick();
   })()`);
   fs.writeFileSync('/tmp/labbook-diagram-editor.png',(await win.webContents.capturePage()).toPNG());
+  win.setContentSize(390,844);
+  await win.webContents.executeJavaScript(`(async()=>{
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   const modal=document.querySelector('.visual-diagram-composer');
+   const source=document.querySelector('#diagramSourceToggle');
+   const bounds=source.getBoundingClientRect();
+   if(bounds.right>innerWidth||bounds.bottom>innerHeight)throw Error('SVG source control is outside the mobile viewport');
+   if(!source.contains(document.elementFromPoint(bounds.x+bounds.width/2,bounds.y+bounds.height/2)))throw Error('Another panel covers the mobile source control');
+   source.click();
+   if(modal.scrollWidth>modal.clientWidth+1)throw Error('Source editor overflows its mobile dialog');
+   if(document.querySelector('#diagramSourcePanel').hidden)throw Error('Mobile source editor did not open');
+   await new Promise(resolve=>setTimeout(resolve,250));
+  })()`);
+  fs.writeFileSync('/tmp/labbook-diagram-mobile.png',(await win.webContents.capturePage()).toPNG());
   console.log('PASS: visual templates, labels/links/colors, drag/resize, undo/redo, duplicate/delete, connectors, image upload, AI adapters/failure, autosave/reopen, editable SVG import');app.exit(0);
  }catch(error){console.error(error);app.exit(1)}
 });

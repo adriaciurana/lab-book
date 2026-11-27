@@ -1,4 +1,4 @@
-.visual-diagram-backdrop{padding:14px;z-index:90!important}
+.visual-diagram-backdrop{padding:14px;z-index:130!important}
 .diagram-header #diagramHarmonize{margin:12px 14px 0 auto;flex-shrink:0}
 .diagram-arrange{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:9px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
 .diagram-arrange small{color:var(--muted)}
@@ -55,3 +55,13 @@
 .diagram-source-feedback{font-size:13px;color:var(--muted);margin:10px 0}
 #diagramApplySource{margin-bottom:14px;min-height:44px}
 #architecturePreview{overflow:auto;max-height:420px}
+
+.diagram-source-controls{display:flex;flex-wrap:wrap;gap:8px;padding:8px 20px;border-bottom:1px solid var(--line)}
+.diagram-source-controls button{min-height:40px;padding:6px 12px}
+@media(max-width:700px){
+ .diagram-source-controls{padding-inline:12px}
+ .diagram-source-controls button{min-height:44px}
+ #diagramSourcePanel{padding:12px}
+ .diagram-generate-actions{flex-wrap:wrap}
+ .diagram-footer{gap:6px;padding:8px 12px}
+}
