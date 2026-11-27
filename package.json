@@ -7,6 +7,7 @@
   "main": "src/electron/main.cjs",
   "scripts": {
     "start": "node src/server/server.cjs",
+    "test:accounts": "node --test tests/accounts.cjs tests/member-workspace.cjs tests/chatgpt-login.cjs tests/chatgpt-plan.cjs && env -u ELECTRON_RUN_AS_NODE electron tests/accounts-ui.cjs",
     "test:persistence": "env -u ELECTRON_RUN_AS_NODE electron tests/persistence.cjs",
     "test:runtime": "node --test tests/runtime.cjs",
     "test:reader": "env -u ELECTRON_RUN_AS_NODE electron tests/reader.cjs",
