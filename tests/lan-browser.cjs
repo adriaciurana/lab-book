@@ -1,20 +1,26 @@
 const {app,BrowserWindow}=require('electron');
+const assert=require('node:assert/strict');
+
 app.whenReady().then(async()=>{
- const win=new BrowserWindow({show:false,width:1280,height:900});
- const errors=[];win.webContents.on('console-message',event=>{if(event.level==='error')errors.push(event.message)});
+ let win;
  try{
-  const base=process.env.LABBOOK_REMOTE_URL||'http://192.168.1.146:8080';
-  await win.loadURL(base+'/papers?isolated=1');
+  const configured=process.env.LABBOOK_REMOTE_URL;
+  assert.ok(configured,'Set LABBOOK_REMOTE_URL to the managed deployment or its local SSH tunnel.');
+  const base=new URL(configured).origin;
+  win=new BrowserWindow({show:false});
+  await win.loadURL(base+'/papers');
   const result=await win.webContents.executeJavaScript(`(async()=>{
-   const assert=(v,m)=>{if(!v)throw Error(m)};
-   assert(typeof crypto.randomUUID==='function','UUID unavailable on LAN HTTP');
-   state=window.LABBOOK_SERVER_STATE;ResearchModel.ensure(state);renderPaperBank();
-   assert(state.papers.length===62,'Expected remote paper library');
-   assert(document.querySelectorAll('.paper-card').length===62,'Paper cards missing');
-   const titles=[];
-   for(const note of state.notes){openEditor(note);assert(document.querySelector('.editor-body').textContent.trim().length>100,'Empty note: '+note.title);titles.push(note.title)}
-   return {secureContext:isSecureContext,papers:state.papers.length,notes:titles.length,titles};
+   const health=await fetch('/api/health',{cache:'no-store'});
+   const data=await fetch('/api/state',{cache:'no-store'});
+   return {
+    loginVisible:Boolean(document.querySelector('form input[autocomplete="username"]')),
+    healthStatus:health.status,
+    environment:(await health.json()).environment,
+    dataStatus:data.status
+   };
   })()`);
-  console.log(JSON.stringify({result,errors},null,2));app.exit(errors.length?1:0);
- }catch(error){console.error(error,errors);app.exit(1)}
+  assert.deepEqual(result,{loginVisible:true,healthStatus:200,environment:'production',dataStatus:401});
+  console.log('PASS: managed production health, browser sign-in and unauthenticated workspace isolation');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win?.destroy();app.exit(process.exitCode||0)}
 });

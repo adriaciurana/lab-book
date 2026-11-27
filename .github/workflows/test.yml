@@ -24,8 +24,10 @@ jobs:
             search-controls sidebar-forms sidebar-resize skill-manager source-pdf-import upload-controls
             workspace-pages
           )
+          status=0
           for suite in "${suites[@]}"; do
             echo "::group::$suite"
-            timeout 60s xvfb-run -a env -u ELECTRON_RUN_AS_NODE ./node_modules/.bin/electron --no-sandbox "tests/$suite.cjs"
+            timeout 60s xvfb-run -a env -u ELECTRON_RUN_AS_NODE ./node_modules/.bin/electron --no-sandbox "tests/$suite.cjs" || status=1
             echo "::endgroup::"
           done
+          exit "$status"

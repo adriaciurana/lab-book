@@ -59,7 +59,7 @@ app.whenReady().then(async()=>{
    document.querySelector('#diagramSourceToggle').click();
    document.querySelector('#architectureMarkup').value='<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9000 100"><rect width="9000" height="100"/></svg>';
    document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();
-   await tick();await tick();assert(downloads.length===2,'XML-prefixed SVG export failed');
+   for(let attempt=0;attempt<25&&downloads.length<2;attempt++)await tick();assert(downloads.includes('research-diagram.svg')&&downloads.includes('research-diagram.png'),'XML-prefixed SVG export failed: '+document.querySelector('#diagramStatus').textContent);
    [...document.querySelectorAll('#diagramSourcePanel button')].find(button=>button.textContent==='Back to canvas').click();
    HTMLAnchorElement.prototype.click=nativeClick;
    document.querySelector('#insertArchitecture').click();await tick();assert(currentDraftNote().content.includes('data-architecture'),'diagram not autosaved');
