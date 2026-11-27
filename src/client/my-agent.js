@@ -9,9 +9,9 @@
  function snapshot(){const chat=active();if(!chat||renderedChatId!==chat.id)return;chat.context=structuredClone(state.context||[]);chat.skillId=document.querySelector('#activeSkill')?.value||'';const web=document.querySelector('#includeWeb');if(web&&!web.disabled)chat.webSearch=web.checked}
  function switchChat(id){snapshot();state.activeAgentChatId=id;const chat=active();state.context=structuredClone(chat.context||[]);store();renderSearch();const picker=document.querySelector('#activeSkill');if(picker){picker.value=chat.skillId||'';picker.dispatchEvent(new Event('change'))}document.querySelector('#includeWeb').checked=!!chat.webSearch;renderContextUI()}
  window.startPageConversation=function(note,version=note){if(!flushDraft())return;snapshot();const text=noteBlocks(version).join('\n\n');if(!text.trim()){toast('This page has no text to use as context');return}const chat=newChat([{type:'note',key:'note:'+note.id+':snapshot',noteId:note.id,label:version.title||note.title,text,snapshot:true,detail:'Page content at conversation start'}]);chat.title='Ask · '+(version.title||note.title);chat.webSearch=true;store();currentView='search';renderSearch();document.querySelector('#contextQuestion')?.focus()};
- function deleteChat(chat){
+ async function deleteChat(chat){
   if(busy.has(chat.id)||window.agentSubmittingChats.has(chat.id))return toast('Stop the current response before deleting this chat.');
-  if(!confirm('Delete this conversation? This cannot be undone.'))return;
+  if(!await confirmAction({title:'Delete conversation?',description:'“'+chat.title+'” and its messages will be permanently deleted.',action:'Delete conversation',destructive:true}))return;
   const previousChats=state.agentChats,previousContext=state.context;
   const remaining=previousChats.filter(item=>item.id!==chat.id);
   const next=remaining.at(-1)||{id:crypto.randomUUID(),title:'New chat',messages:[],context:[],skillId:'',webSearch:false};

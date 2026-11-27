@@ -13,6 +13,6 @@ jobs:
       - run: npm run test:coverage
       - name: Browser integration tests
         run: |
-          for suite in accounts-ui my-agent workspace-pages agent-send-lock environment-picker; do
+          for suite in accounts-ui my-agent agent-layout workspace-pages agent-send-lock environment-picker; do
             xvfb-run -a env -u ELECTRON_RUN_AS_NODE ./node_modules/.bin/electron --no-sandbox "tests/$suite.cjs"
           done

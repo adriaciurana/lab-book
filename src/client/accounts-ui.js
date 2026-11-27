@@ -82,8 +82,10 @@
     const role=document.createElement('select');role.setAttribute('aria-label','Role for '+member.username);
     role.add(new Option('Member','member'));role.add(new Option('Administrator','admin'));role.value=member.role;
     role.onchange=async()=>{
-     if(!confirm('Change access for '+member.username+'? Their current sessions will end.')){role.value=member.role;return}
-     try{await api('member-access',{id:member.id,role:role.value});await renderMembers();panel.status('Role updated.')}
+     const selectedRole=role.value;
+     const accepted=await confirmAction({title:'Change workspace role?',description:'Changing the role for '+member.username+' will sign them out of their current sessions.',action:'Change role'});
+     if(!accepted){role.value=member.role;return}
+     try{await api('member-access',{id:member.id,role:selectedRole});await renderMembers();panel.status('Role updated.')}
      catch(error){role.value=member.role;panel.status(error.message)}
     };
     const revoke=document.createElement('button');revoke.type='button';revoke.className='text-btn';revoke.textContent='Sign out sessions';

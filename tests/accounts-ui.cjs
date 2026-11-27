@@ -52,6 +52,13 @@ app.whenReady().then(async()=>{
    member.elements.username.value='member-ui';member.elements.password.value='initial member password';
    member.requestSubmit();
    await wait(()=>[...document.querySelectorAll('[aria-label="Workspace members"] li')].find(row=>row.textContent.includes('member-ui')));
+   const role=document.querySelector('select[aria-label="Role for member-ui"]');
+   role.value='admin';
+   role.dispatchEvent(new Event('change'));
+   const dialog=document.querySelector('dialog.action-dialog[open]');
+   if(!dialog||!dialog.textContent.includes('member-ui'))throw Error('Role change lacks a personalized confirmation');
+   dialog.querySelector('[value=cancel]').click();
+   await wait(()=>role.value==='member');
    connect.click();
    if(!connect.disabled)throw Error('The authorization button did not show its pending state');
   })()`);

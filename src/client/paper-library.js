@@ -10,7 +10,7 @@ renderPaperBank=function(){
  document.querySelector('#addPaper').onclick=openPaperBankModal;
  document.querySelectorAll('[data-library-topic]').forEach(b=>b.onclick=()=>{libraryCollection=b.dataset.libraryTopic;renderPaperBank()});
  document.querySelector('#libraryTag').onchange=e=>{libraryTag=e.target.value;renderPaperBank()};
- document.querySelectorAll('[data-delete-library-paper]').forEach(b=>b.onclick=()=>{if(confirm('Remove this paper from the library? Notes and local PDF files will be kept.')){state.papers=state.papers.filter(p=>p.id!==b.dataset.deleteLibraryPaper);save();renderPaperBank()}});
+ document.querySelectorAll('[data-delete-library-paper]').forEach(b=>b.onclick=async()=>{if(await confirmAction({title:'Remove paper from library?',description:'Your notes and local PDF files will stay in the workspace.',action:'Remove paper',destructive:true})){state.papers=state.papers.filter(p=>p.id!==b.dataset.deleteLibraryPaper);save();renderPaperBank()}});
  if(typeof syncWorkspaceRoute==='function')syncWorkspaceRoute('/papers');
 };
 async function summarizePaperAndSave(paper,{refresh=false}={}){
