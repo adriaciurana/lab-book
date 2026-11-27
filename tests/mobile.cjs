@@ -6,6 +6,9 @@ app.whenReady().then(async()=>{
  try{
   workspace=await startWorkspaceServer();
   await win.loadURL(workspace.origin+'/papers?isolated=1');
+  // A hidden window may suspend CSS transitions on Xvfb. Check the drawer's
+  // final geometry and accessibility without relying on animation frames.
+  await win.webContents.insertCSS('.sidebar { transition: none !important; }');
   for(const width of [390,320,700]){
    win.setContentSize(width,844);
    await win.webContents.executeJavaScript(`(async()=>{
@@ -17,9 +20,8 @@ app.whenReady().then(async()=>{
     const menu=document.querySelector('.mobile-menu-button'),sidebar=document.querySelector('.sidebar');
     assert(getComputedStyle(menu).display!=='none','Missing menu button');
     menu.click();
-    for(let i=0;i<40&&sidebar.getBoundingClientRect().left<-1;i++)await new Promise(r=>setTimeout(r,25));
     assert(getComputedStyle(sidebar).display==='flex','Sidebar hidden by old media query');
-    assert(sidebar.getBoundingClientRect().left>=-1&&!sidebar.inert,'Drawer not accessible');
+    assert(sidebar.getBoundingClientRect().left>=-1&&!sidebar.inert,'Drawer not accessible: '+JSON.stringify({left:sidebar.getBoundingClientRect().left,inert:sidebar.inert,expanded:menu.getAttribute('aria-expanded')}));
     window.dispatchEvent(new Event('resize'));
     assert(menu.getAttribute('aria-expanded')==='true'&&!sidebar.inert,'A resize within mobile layout closed the drawer');
     document.querySelector('.mobile-nav-backdrop').click();assert(menu.getAttribute('aria-expanded')==='false'&&sidebar.inert,'Outside click failed');
