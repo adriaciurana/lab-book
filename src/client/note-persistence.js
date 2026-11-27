@@ -24,20 +24,27 @@ function updateRollbackState(){
   const button=document.querySelector('#rollbackDraft');
   if(button)button.disabled=!currentDraftNote()?.versions?.length;
 }
+function showDraftStatus(message, failed=false){
+  const status=document.querySelector('#draftSaveStatus');
+  if(status)status.textContent=message;
+  const retry=document.querySelector('#retryDraftSave');
+  if(retry)retry.hidden=!failed;
+}
 function persistDraft(){
   const note=currentDraftNote(),snap=editorSnapshot();
   if(!note||!snap)return true;
   if(note.content===snap.content&&note.title===snap.title)return true;
   const previous={...note};
   Object.assign(note,snap,{draft:true,tag:'draft',updatedAt:new Date().toISOString()});
+  showDraftStatus('Saving draft…');
   try {
     save();
-    const status=document.querySelector('.editor-meta .muted:last-child');if(status)status.textContent='Draft saved';
+    showDraftStatus('Draft saved');
     updateRollbackState();return true;
   } catch(error) {
     Object.assign(note,previous);
     document.querySelector('#saveStatus').textContent='Save failed: '+error.message;
-    const status=document.querySelector('.editor-meta .muted:last-child');if(status)status.textContent='Unsaved changes';
+    showDraftStatus('Draft not saved. Your edits are still in the editor.',true);
     return false;
   }
 }
@@ -57,16 +64,25 @@ openEditor=function(note){
   if(typeof note.content==='string')activeBody.innerHTML=note.content;
   else{const paragraph=document.createElement('p');if(note.desc)paragraph.textContent=note.desc;else paragraph.append(document.createElement('br'));activeBody.replaceChildren(paragraph)}
   document.querySelector('.editor .title').value=note.title;
+  const meta=document.querySelector('.editor-meta');
+  if(meta){
+    const status=meta.querySelector('.muted:last-child')||meta.appendChild(document.createElement('span'));
+    status.id='draftSaveStatus';status.setAttribute('role','status');
+    const retry=document.createElement('button');
+    retry.type='button';retry.id='retryDraftSave';retry.className='btn ghost';retry.textContent='Retry save';retry.hidden=true;
+    retry.onclick=()=>{if(persistDraft())status.focus()};
+    status.tabIndex=-1;status.after(retry);
+  }
   const manual=document.querySelector('#saveNote');
   manual.textContent='Publish version';
   manual.onclick=()=>{
     if(!flushDraft())return;
     const latest=currentDraftNote();
-    latest.versions=latest.versions||[];
+    const previous={...latest};
     const published={...editorSnapshot(),savedAt:new Date().toISOString()};
-    latest.versions.push(published);latest.published=structuredClone(published);
+    latest.versions=[...(latest.versions||[]),published];latest.published=structuredClone(published);
     latest.draft=false;
-    try{save();toast('Version published');updateRollbackState()}catch{toast('Unable to publish this version')}
+    try{save();toast('Version published');updateRollbackState()}catch{Object.assign(latest,previous);toast('Unable to publish. Your draft is still available. Try Publish version again.')}
   };
   document.querySelector('#cancelEdit').textContent='Close';
   document.querySelector('#cancelEdit').onclick=()=>{if(flushDraft())typeof renderPublishedNote==='function'?renderPublishedNote(currentDraftNote()):render()};
@@ -82,7 +98,7 @@ function rollbackDraft(){
   const version=currentDraftNote()?.versions?.at(-1);
   if(!version||!confirm('Restore the latest saved version and discard the current draft changes?'))return;
   document.querySelector('.editor .title').value=version.title;
-  activeBody.innerHTML=version.content;persistDraft();toast('Latest saved version restored');
+  activeBody.innerHTML=version.content;if(persistDraft())toast('Latest saved version restored');
 }
 // Flush before a navigation handler removes the editor, including immediate clicks.
 document.addEventListener('click',event=>{

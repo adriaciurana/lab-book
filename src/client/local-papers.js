@@ -14,10 +14,17 @@ async function ensureLocalPaper(paper){
 openPaperSplit=async function(paper){
  const editor=document.querySelector('.editor');if(!editor||!paper)return;
  editor.classList.add('editor-split');editor.querySelector('.paper-side-panel')?.remove();
+ const opener=document.activeElement;
  const panel=document.createElement('aside');panel.className='paper-side-panel';
- panel.innerHTML='<div class="paper-side-head"><strong></strong><button class="btn ghost" data-annotate>Highlight</button><button class="btn ghost" data-close-local>×</button></div><div class="paper-side-body"><span>Preparing a local copy of the PDF…</span></div>';
+ panel.innerHTML='<div class="paper-side-head"><strong></strong><button class="btn ghost" data-annotate>Highlight</button><button class="btn ghost" data-close-local aria-label="Close PDF reader">×</button></div><div class="paper-side-body"><span>Preparing a local copy of the PDF…</span></div>';
  panel.querySelector('strong').textContent=paper.title;editor.append(panel);
- panel.querySelector('[data-close-local]').onclick=()=>{panel.remove();editor.classList.remove('editor-split')};
+ const close=panel.querySelector('[data-close-local]');
+ close.onclick=()=>{
+  panel.remove();editor.classList.remove('editor-split');
+  (opener?.isConnected&&opener!==document.body?opener:editor.querySelector('.editor-body'))?.focus({preventScroll:true});
+ };
+ panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();close.click()}});
+ close.focus({preventScroll:true});
  const body=panel.querySelector('.paper-side-body');
  try{
   const localUrl=await ensureLocalPaper(paper);if(!panel.isConnected)return;

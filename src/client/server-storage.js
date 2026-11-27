@@ -32,7 +32,10 @@ save=function(){
     request.open('PUT','/api/state',false);
     request.setRequestHeader('Content-Type','application/json');
     if(window.LABBOOK_STATE_REVISION)request.setRequestHeader('If-Match',window.LABBOOK_STATE_REVISION);
-    request.send(serialized);
+    try{request.send(serialized)}catch(error){
+      try{localStorage.setItem(STORAGE_KEY+'-conflict-recovery',serialized)}catch{}
+      throw error;
+    }
     if(request.status===409){
       localStorage.setItem(STORAGE_KEY+'-conflict-recovery',serialized);
       const latest=new XMLHttpRequest();latest.open('GET','/api/state',false);latest.send();
@@ -41,12 +44,13 @@ save=function(){
       const retry=new XMLHttpRequest();retry.open('PUT','/api/state',false);retry.setRequestHeader('Content-Type','application/json');retry.setRequestHeader('If-Match',latest.getResponseHeader('X-Labbook-Revision'));retry.send(JSON.stringify(merged));
       if(retry.status!==200)throw Error('Workspace changed again. Local recovery preserved; retry saving.');
       state=merged;lastSavedSnapshot=structuredClone(state);window.LABBOOK_STATE_REVISION=retry.getResponseHeader('X-Labbook-Revision');
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));document.querySelector('#saveStatus').textContent='Saved to disk';return;
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch{}document.querySelector('#saveStatus').textContent='Saved to disk';return;
     }
     if(request.status!==200){localStorage.setItem(STORAGE_KEY+'-conflict-recovery',serialized);throw Error('Unable to save to the server');}
     window.LABBOOK_STATE_REVISION=request.getResponseHeader('X-Labbook-Revision');
   }
-  localStorage.setItem(STORAGE_KEY,serialized);
+  if(isolatedWorkspace)localStorage.setItem(STORAGE_KEY,serialized);
+  else try{localStorage.setItem(STORAGE_KEY,serialized)}catch{}
   lastSavedSnapshot=structuredClone(state);
   document.querySelector('#saveStatus').textContent=isolatedWorkspace?'Isolated test':(LABBOOK_ENV==='test'?'TEST · Saved':'Saved to disk');
 };

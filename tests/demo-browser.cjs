@@ -17,6 +17,10 @@ app.whenReady().then(async()=>{
    assert(document.querySelector('.reader-sheet canvas')?.width>0,'Mock PDF did not render');
    assert(document.querySelector('.reader-highlight'),'Seeded PDF highlight missing');
    assert(document.querySelector('.textLayer').textContent.includes('synthetic toy metric'),'PDF text selection layer missing');
+   const closeReader=document.querySelector('[data-close-local]');
+   assert(document.activeElement===closeReader,'PDF reader did not receive keyboard focus');
+   closeReader.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+   assert(!document.querySelector('.paper-side-panel'),'Escape did not close the PDF reader');
    openEditor(state.notes.find(n=>n.id==='demo-blocks'));await tick();
    assert(document.querySelectorAll('.editor-body h1,.editor-body h2,.editor-body h3,.editor-body h4,.editor-body h5,.editor-body h6').length>=6,'Headings missing');
    assert(document.querySelector('.research-table [colspan="2"]'),'Merged cell missing');

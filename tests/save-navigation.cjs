@@ -13,6 +13,16 @@ app.whenReady().then(async()=>{
   await win.loadURL(`http://127.0.0.1:${server.address().port}/notes/test-note?edit=1`);
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)};
+   const nativeSend=XMLHttpRequest.prototype.send;
+   const draft=document.querySelector('.editor-body');
+   XMLHttpRequest.prototype.send=function(){throw Error('Simulated network loss')};
+   draft.innerHTML='<p>Recoverable edit</p>';
+   assert(!persistDraft(),'Offline draft reported as saved');
+   assert(!document.querySelector('#retryDraftSave').hidden,'Retry was not offered');
+   assert(draft.textContent.includes('Recoverable edit'),'Failed save cleared the editor');
+   XMLHttpRequest.prototype.send=nativeSend;
+   document.querySelector('#retryDraftSave').click();
+   assert(document.querySelector('#retryDraftSave').hidden,'Retry did not save the draft');
    const body=document.querySelector('.editor-body');body.innerHTML='<p>First edit</p>';assert(persistDraft(),'First save failed');
    await new Promise(r=>setTimeout(r,150));body.innerHTML='<p>Second edit</p>';assert(persistDraft(),'Second save conflicted with first');
    await new Promise(r=>setTimeout(r,150));const response=await fetch('/api/state'),remote=await response.json();remote.notes.push({id:'external-note',title:'Other tab',folder:'inbox',content:'<p>External</p>'});
