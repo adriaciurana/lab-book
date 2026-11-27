@@ -104,3 +104,4 @@
 .agent-table-scroll:focus-visible{outline:2px solid var(--accent-ink);outline-offset:2px}
 .agent-latest{position:sticky;bottom:12px;display:block;margin:8px auto;z-index:1;background:var(--panel)}
 .agent-latest[hidden]{display:none}
+.agent-model-picker{display:flex;align-items:center;gap:6px;flex-wrap:wrap}

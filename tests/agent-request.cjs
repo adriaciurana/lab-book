@@ -6,3 +6,13 @@ test('native proposal fields avoid nested JSON and malformed legacy fields fail 
  mode='malformed';response=await post();data=await response.json();assert.equal(response.status,400);assert.match(data.error,/malformed fields/);assert(!data.error.includes('position'));assert(!data.workspaceProposal);
  mode='trailing';response=await post();assert.equal(response.status,400);assert.match((await response.json()).error,/incomplete proposal/);mode='incomplete';response=await post();assert.match((await response.json()).error,/cut short/);
 });
+
+require('node:test').test('chat model overrides the server default for proposal requests',()=>{
+ const assert=require('node:assert/strict');
+ const {buildRequest}=require('../src/server/research-search.cjs');
+ const request=buildRequest({query:'Compare the results',proposeChanges:true,model:'gpt-5.4'});
+ assert.equal(request.model,'gpt-5.4');
+ assert.equal(request.reasoning.effort,'medium');
+ assert.ok(request.text.format);
+ assert.throws(()=>buildRequest({query:'Hello',model:'unknown'}),/supported chat model/);
+});
