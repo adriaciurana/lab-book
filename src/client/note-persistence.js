@@ -24,25 +24,51 @@ function updateRollbackState(){
   const button=document.querySelector('#rollbackDraft');
   if(button)button.disabled=!currentDraftNote()?.versions?.length;
 }
+function draftRecoveryKey(id){return STORAGE_KEY+'-draft-recovery-'+id}
+function readDraftRecovery(id){
+  try{return JSON.parse(localStorage.getItem(draftRecoveryKey(id))||'null')}catch{return null}
+}
+function offerDraftRecovery(note,status){
+  const recovery=readDraftRecovery(note.id);
+  if(!recovery||typeof recovery.content!=='string'||typeof recovery.title!=='string')return;
+  if(recovery.content===note.content&&recovery.title===note.title)return;
+  const recover=document.createElement('button');
+  recover.type='button';recover.className='btn ghost';recover.textContent='Recover as new note';
+  status.textContent='An unsaved draft is available on this device.';
+  recover.onclick=()=>{
+    const copy={id:crypto.randomUUID(),title:recovery.title+' (recovered)',content:recovery.content,
+      folder:note.folder,type:'✎',tag:'draft',tone:'lime',draft:true,versions:[]};
+    if(!flushDraft())return;
+    state.notes.unshift(copy);
+    openEditor(copy);
+    if(activeNoteId===copy.id&&persistDraft(true)){
+      try{localStorage.removeItem(draftRecoveryKey(note.id))}catch{}
+    }
+  };
+  status.after(recover);
+}
 function showDraftStatus(message, failed=false){
   const status=document.querySelector('#draftSaveStatus');
   if(status)status.textContent=message;
   const retry=document.querySelector('#retryDraftSave');
   if(retry)retry.hidden=!failed;
 }
-function persistDraft(){
+function persistDraft(force=false){
   const note=currentDraftNote(),snap=editorSnapshot();
   if(!note||!snap)return true;
-  if(note.content===snap.content&&note.title===snap.title)return true;
+  if(force!==true&&note.content===snap.content&&note.title===snap.title&&document.querySelector("#retryDraftSave")?.hidden!==false)return true;
   const previous={...note};
   Object.assign(note,snap,{draft:true,tag:'draft',updatedAt:new Date().toISOString()});
   showDraftStatus('Saving draft…');
   try {
     save();
+    const recovery=readDraftRecovery(note.id);
+    if(recovery?.title===snap.title&&recovery?.content===snap.content){try{localStorage.removeItem(draftRecoveryKey(note.id))}catch{}}
     showDraftStatus('Draft saved');
     updateRollbackState();return true;
   } catch(error) {
     Object.assign(note,previous);
+    try{localStorage.setItem(draftRecoveryKey(note.id),JSON.stringify({title:snap.title,content:snap.content}))}catch{}
     document.querySelector('#saveStatus').textContent='Save failed: '+error.message;
     showDraftStatus('Draft not saved. Your edits are still in the editor.',true);
     return false;
@@ -72,6 +98,7 @@ openEditor=function(note){
     retry.type='button';retry.id='retryDraftSave';retry.className='btn ghost';retry.textContent='Retry save';retry.hidden=true;
     retry.onclick=()=>{if(persistDraft())status.focus()};
     status.tabIndex=-1;status.after(retry);
+    offerDraftRecovery(note,status);
   }
   const manual=document.querySelector('#saveNote');
   manual.textContent='Publish version';

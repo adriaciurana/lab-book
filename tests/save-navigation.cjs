@@ -31,6 +31,16 @@ app.whenReady().then(async()=>{
    document.querySelector('[data-view="papers"]').click();assert(document.querySelector('.paper-bank'),'Navigation blocked');
    const stored=await(await fetch('/api/state')).json();assert(stored.notes.find(n=>n.id==='test-note').content.includes('Third edit'),'Draft lost');assert(stored.notes.some(n=>n.id==='external-note'),'Other tab note lost');
   })()`);
+  await win.webContents.executeJavaScript(`localStorage.setItem(draftRecoveryKey('test-note'),JSON.stringify({title:'Navigation test',content:'<p>Offline edit from a previous session</p>'}))`);
+  await win.loadURL(`http://127.0.0.1:${server.address().port}/notes/test-note?edit=1`);
+  await win.webContents.executeJavaScript(`(async()=>{
+   const recover=[...document.querySelectorAll('button')].find(button=>button.textContent==='Recover as new note');
+   if(!recover)throw Error('Local recovery was missing after reload');
+   recover.click();
+   const stored=await(await fetch('/api/state')).json();
+   if(!stored.notes.some(note=>note.id!=='test-note'&&note.content.includes('Offline edit from a previous session')))throw Error('Recovered copy missing');
+   if(!stored.notes.find(note=>note.id==='test-note').content.includes('Third edit'))throw Error('Recovery replaced the original');
+  })()`);
   console.log('PASS: repeated autosave, independent concurrent changes, navigation and persisted drafts');server.close();app.exit(0);
  }catch(error){console.error(error);server.close();app.exit(1)}
 });
