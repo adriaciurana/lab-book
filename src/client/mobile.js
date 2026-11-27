@@ -1,5 +1,6 @@
 (function(){
  const topbar=document.querySelector('.topbar'),sidebar=document.querySelector('.sidebar');
+ const mobileViewport=window.matchMedia('(max-width: 700px)');
  if(!topbar||!sidebar)return;
  sidebar.id=sidebar.id||'workspaceNavigation';
  const button=document.createElement('button');
@@ -9,7 +10,7 @@
  function setOpen(open,restoreFocus=false){
   document.body.classList.toggle('mobile-nav-open',open);backdrop.hidden=!open;
   button.setAttribute('aria-expanded',String(open));button.setAttribute('aria-label',open?'Close navigation':'Open navigation');
-  sidebar.inert=innerWidth<=700&&!open;
+  sidebar.inert=mobileViewport.matches&&!open;
   if(open)sidebar.querySelector('button,a,input')?.focus();else if(restoreFocus)button.focus();
  }
  button.onclick=()=>setOpen(!document.body.classList.contains('mobile-nav-open'));
@@ -23,5 +24,5 @@
    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}
   }
  });
- window.addEventListener('resize',()=>setOpen(false));setOpen(false);
+ mobileViewport.addEventListener('change',()=>setOpen(false));setOpen(false);
 })();
