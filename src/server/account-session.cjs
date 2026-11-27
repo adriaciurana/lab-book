@@ -32,8 +32,12 @@ function createAccountGate(runtime) {
   const lifetime = 8 * 60 * 60 * 1000;
   const cookieName = 'labbook_session_' + runtime.environment;
 
+  function secureTransport(req) {
+    return req.socket.encrypted || process.env.LABBOOK_HTTPS === '1';
+  }
+
   function setCookie(req, res, token, age) {
-    const secure = req.socket.encrypted || process.env.LABBOOK_HTTPS === '1';
+    const secure = secureTransport(req);
     res.setHeader('Set-Cookie', cookieName+'='+token+'; Path=/; HttpOnly; SameSite=Strict; Max-Age='+age+(secure?'; Secure':''));
   }
 
@@ -61,6 +65,9 @@ function createAccountGate(runtime) {
     if (!fs.existsSync(filename)) return false;
     const pathname = new URL(req.url,'http://localhost').pathname;
     if (pathname==='/api/health' && req.method==='GET') return false;
+    if (!secureTransport(req) && !localBrowser(req)) {
+      return runtime.json(res,426,{error:'Open Lab Book over HTTPS or through a local SSH tunnel.'});
+    }
     const registry = JSON.parse(fs.readFileSync(filename,'utf8'));
     const now=Date.now();
     for(const [key,session] of sessions)if(session.expires<=now)sessions.delete(key);

@@ -38,6 +38,14 @@ test('configured workspace requires sign-in and password rotation before exposin
     headers:{...(body&&{'Content-Type':'application/json'}),...(cookie&&{Cookie:cookie})},
     ...(body&&{body:JSON.stringify(body)})
   });
+  const throughProxy = route => new Promise((resolve,reject)=>{
+    require('node:http').get(base+route,{headers:{Host:'lab-book.local'}},response=>{
+      response.resume();
+      resolve(response.statusCode);
+    }).on('error',reject);
+  });
+  assert.equal(await throughProxy('/'),426);
+  assert.equal(await throughProxy('/api/health'),200);
   assert.equal((await request('/bootstrap.js')).status,401);
   const login = await request('/api/account/login',{username:'admin',password:'temporary password'});
   assert.equal(login.status,200);
