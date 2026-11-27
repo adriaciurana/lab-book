@@ -125,8 +125,6 @@ app.whenReady().then(async()=>{
   await win.loadURL(page);
   await win.webContents.executeJavaScript(`if(document.querySelector('.editor-body').textContent!=='Updated result')throw Error('The administrator did not see the member edit')`);
   await win.webContents.executeJavaScript(`(async()=>{
-   const settings=document.querySelector('[data-account-settings]');
-   settings.click();
    const wait=async get=>{
     for(let i=0;i<100;i++){
      const value=get();
@@ -135,6 +133,7 @@ app.whenReady().then(async()=>{
     }
     throw Error('Password update did not finish');
    };
+   (await wait(()=>document.querySelector('[data-account-settings]'))).click();
    const form=await wait(()=>document.querySelector('form:has(input[name=current])'));
    form.elements.current.value='permanent admin password';
    form.elements.password.value='updated admin password';
