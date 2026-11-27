@@ -13,12 +13,20 @@ function confirmAction({title, description, action, destructive=false}){
  primary.classList.toggle('destructive',destructive);
  document.body.append(dialog);
  return new Promise(resolve=>{
-  dialog.addEventListener('close',()=>{
-   const confirmed=dialog.returnValue==='confirm';
+  const finish=confirmed=>{
+   dialog.close();
    dialog.remove();
    if(opener?.isConnected)opener.focus();
    resolve(confirmed);
-  },{once:true});
+  };
+  dialog.querySelector('form').onsubmit=event=>{
+   event.preventDefault();
+   finish(event.submitter===primary);
+  };
+  dialog.addEventListener('cancel',event=>{
+   event.preventDefault();
+   finish(false);
+  });
   dialog.showModal();
  });
 }
