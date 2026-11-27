@@ -8,6 +8,9 @@ app.whenReady().then(async()=>{
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(v,m)=>{if(!v)throw Error(m)},tick=()=>new Promise(r=>setTimeout(r,120));
    openEditor();const noteId=activeNoteId;openArchitectureComposer();
+   const vertical=mermaidToScene('flowchart TB\\nA-->B-->C');
+   assert(vertical.edges.length===2&&vertical.nodes[0].y<vertical.nodes[1].y,'Vertical chained flowchart lost its layout or links');
+   assert(mermaidToScene('flowchart LR\\nA --> B\\nsubgraph unsupported')===null,'Unsupported Mermaid silently discarded');
    const svgDraft=document.querySelector('#architectureMarkup').value;
    document.querySelector('.diagram-source-mode').click();
    await tick();

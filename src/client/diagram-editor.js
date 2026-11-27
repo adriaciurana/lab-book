@@ -1,11 +1,33 @@
 function mermaidToScene(source){
  const lines=String(source||'').split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&!x.startsWith('%%'));
- if(!/^(?:flowchart|graph)\s+(?:LR|RL|TB|BT)/i.test(lines[0]||''))return null;
- const scene=DiagramModel.empty(),nodes=new Map(),edges=[];let serial=0;
- const clean=v=>v.replace(/^\s+|\s+$/g,'');
- function add(raw){const match=raw.match(/^([A-Za-z_][\w-]*)(?:\[([^\]]+)\]|\(([^\)]+)\)|\{([^}]+)\}|\(\(([^)]+)\)\))?$/);if(!match)return null;const id=match[1],label=clean(match.slice(2).find(Boolean)||id);if(!nodes.has(id)){const kind=match[4]?'diamond':match[3]?'ellipse':'box';const n=DiagramModel.node(id,label,40+(nodes.size%4)*250,80+Math.floor(nodes.size/4)*145,kind==='diamond'?'#ffe7ce':'#e7eafb',kind);nodes.set(id,n);scene.nodes.push(n)}return id}
- for(const line of lines.slice(1)){const parts=line.split(/\s+(?:-->|---|-.->|==>)+\s+/);if(parts.length<2){add(clean(line));continue}const from=add(clean(parts[0])),to=add(clean(parts[parts.length-1]));if(from&&to)edges.push({id:'mermaid-edge-'+serial++,from,to,label:'',dashed:/-\.->/.test(line)})}
- scene.edges=edges;scene.width=Math.max(1100,Math.min(5000,420+Math.max(1,Math.min(4,nodes.size))*250));scene.height=Math.max(650,250+Math.ceil(nodes.size/4)*145);return DiagramModel.validate(scene);
+ const direction=lines[0]?.match(/^(?:flowchart|graph)\s+(LR|RL|TB|BT);?$/i)?.[1].toUpperCase();
+ if(!direction)return null;
+ const scene=DiagramModel.empty(),nodes=new Map();
+ function add(raw){
+  const match=raw.trim().match(/^([A-Za-z_][\w-]*)(?:\[([^\]]+)\]|\(\(([^)]+)\)\)|\(([^)]+)\)|\{([^}]+)\})?$/);
+  if(!match)return null;
+  const [,id,box,circle,ellipse,diamond]=match;
+  const label=box||circle||ellipse||diamond;
+  if(!nodes.has(id))nodes.set(id,DiagramModel.node(id,label||id,0,0,diamond?'#ffe7ce':'#e7eafb',diamond?'diamond':circle||ellipse?'ellipse':'box'));
+  else if(label)nodes.get(id).label=label;
+  return id;
+ }
+ for(const line of lines.slice(1)){
+  const parts=line.replace(/;$/,'').split(/(\s*(?:-->|---|-\.->|==>)\s*)/);
+  let from=add(parts[0]);if(!from)return null;
+  for(let i=1;i<parts.length;i+=2){
+   const to=add(parts[i+1]);if(!to)return null;
+   scene.edges.push({id:'mermaid-edge-'+scene.edges.length,from,to,label:'',dashed:parts[i].includes('-.->')});
+   from=to;
+  }
+ }
+ const vertical=direction==='TB'||direction==='BT';
+ const ordered=[...nodes.values()];if(direction==='BT'||direction==='RL')ordered.reverse();
+ ordered.forEach((node,i)=>{node.x=40+(vertical?0:i*235);node.y=40+(vertical?i*110:0)});
+ scene.nodes=[...nodes.values()];
+ scene.width=Math.max(400,vertical?400:ordered.length*235+60);
+ scene.height=Math.max(220,vertical?ordered.length*110+40:220);
+ return DiagramModel.validate(scene);
 }
 function diagramBase64(text){const bytes=new TextEncoder().encode(text);let result='';for(let i=0;i<bytes.length;i+=32768)result+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(result)}
 function diagramFromMarkup(markup){
