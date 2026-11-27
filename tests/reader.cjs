@@ -1,7 +1,7 @@
 const {app,BrowserWindow}=require('electron');
 const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
- const win=new BrowserWindow({show:false,webPreferences:{partition:'reader-regression'}});
+ const win=new BrowserWindow({show:false,webPreferences:{partition:'reader-regression',backgroundThrottling:false}});
  let workspace;
  try{
   workspace=await startWorkspaceServer();
@@ -29,11 +29,14 @@ app.whenReady().then(async()=>{
    document.querySelector('[data-link]').click();
    assert(document.querySelector('.editor-body [data-region-id]'),'highlight not linked');
    const before=document.querySelector('[data-zoom]').textContent;
-   document.querySelector('[data-plus]').click();await tick();await tick();
+   document.querySelector('[data-plus]').click();
+   for(let i=0;i<100&&document.querySelector('[data-zoom]').textContent===before;i++)await tick();
    assert(document.querySelector('[data-zoom]').textContent!==before,'zoom unchanged');
-   document.querySelector('[data-next]').click();await tick();await tick();
+   document.querySelector('[data-next]').click();
+   for(let i=0;i<100&&document.querySelector('[data-page]').value!=='2';i++)await tick();
    assert(document.querySelector('[data-page]').value==='2','next page failed');
-   document.querySelector('[data-prev]').click();await tick();await tick();
+   document.querySelector('[data-prev]').click();
+   for(let i=0;i<100&&!document.querySelector('.reader-highlight');i++)await tick();
    assert(document.querySelector('.reader-highlight'),'highlight not restored after navigation');
    assert(JSON.parse(localStorage.getItem(STORAGE_KEY)).papers[0].highlights.length===1,'highlight missing in saved state');
    const noteId=activeNoteId;

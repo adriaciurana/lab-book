@@ -2,7 +2,7 @@ const {app,BrowserWindow}=require('electron'),fs=require('node:fs'),os=require('
 app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'labbook-diagrams-')));
 const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
- const win=new BrowserWindow({show:false,width:1500,height:1100});
+ const win=new BrowserWindow({show:false,width:1500,height:1100,webPreferences:{backgroundThrottling:false}});
  win.webContents.on('console-message',event=>{if(event.level==='error')console.error(event.message)});
  let workspace;
  try{
@@ -55,7 +55,7 @@ app.whenReady().then(async()=>{
    window.fetch=async(url,options)=>String(url)==='/api/diagrams/generate'?{ok:false,json:async()=>({error:'Generation fixture failed'})}:nativeFetch(url,options);
    const before=scene().nodes.length;document.querySelector('#diagramGenerate').click();await tick();assert(document.querySelector('#diagramStatus').textContent.includes('fixture failed')&&scene().nodes.length===before,'AI failure destroyed canvas');window.fetch=nativeFetch;
    const downloads=[],nativeClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download)downloads.push(this.download);else nativeClick.call(this)};
-   document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();await tick();await tick();assert(downloads.includes('research-diagram.svg')&&downloads.includes('research-diagram.png'),'export failed: '+document.querySelector('#diagramStatus').textContent);downloads.length=0;
+   document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();for(let attempt=0;attempt<25&&downloads.length<2;attempt++)await tick();assert(downloads.includes('research-diagram.svg')&&downloads.includes('research-diagram.png'),'export failed: '+document.querySelector('#diagramStatus').textContent);downloads.length=0;
    document.querySelector('#diagramSourceToggle').click();
    document.querySelector('#architectureMarkup').value='<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9000 100"><rect width="9000" height="100"/></svg>';
    document.querySelector('#diagramExportSvg').click();document.querySelector('#diagramExportPng').click();

@@ -1,7 +1,7 @@
 const {app,BrowserWindow}=require('electron');
 const {startWorkspaceServer}=require('./support/workspace-server.cjs');
 app.whenReady().then(async()=>{
- const win=new BrowserWindow({show:false,width:390,height:844,useContentSize:true});
+ const win=new BrowserWindow({show:false,width:390,height:844,useContentSize:true,webPreferences:{backgroundThrottling:false}});
  let workspace;
  try{
   workspace=await startWorkspaceServer();
@@ -13,7 +13,8 @@ app.whenReady().then(async()=>{
     const assert=(v,m)=>{if(!v)throw Error(m+' at '+innerWidth+'px')};
     const menu=document.querySelector('.mobile-menu-button'),sidebar=document.querySelector('.sidebar');
     assert(getComputedStyle(menu).display!=='none','Missing menu button');
-    menu.click();await new Promise(r=>setTimeout(r,250));
+    menu.click();
+    for(let i=0;i<40&&sidebar.getBoundingClientRect().left<-1;i++)await new Promise(r=>setTimeout(r,25));
     assert(getComputedStyle(sidebar).display==='flex','Sidebar hidden by old media query');
     assert(sidebar.getBoundingClientRect().left>=-1&&!sidebar.inert,'Drawer not accessible');
     document.querySelector('.mobile-nav-backdrop').click();assert(menu.getAttribute('aria-expanded')==='false'&&sidebar.inert,'Outside click failed');
