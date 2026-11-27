@@ -13,6 +13,6 @@ Images are saved in `docs/images/screenshots/`:
 | `repository-branches.png` | Branch relationships and run metadata in dark theme |
 | `environment-switching.png` | Registered destinations and the new environment form |
 
-All papers, scores, repositories, machines and runs in these screenshots are fictional. Demo notes are published only inside the temporary capture workspace so readers can see their contents. The environment form is filled for illustration and is not submitted. Screenshot text and README captions are in English.
+Scores, repositories, machines and runs are fictional. The annotation capture downloads [Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114v11) into its temporary workspace and links a highlighted passage to a note. Demo notes are published only inside the temporary capture workspace so readers can see their contents. The environment form is filled for illustration and is not submitted. Screenshot text and README captions are in English.
 
 After changing the UI, regenerate the images, inspect each one and commit the relevant PNG files with the documentation changes.

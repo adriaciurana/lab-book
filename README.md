@@ -21,7 +21,7 @@ A local research workspace that connects papers, annotated PDFs, nested notes, t
 
 ## See the workflow
 
-These are screenshots of the real app using fictional demo data. Scores, papers, machines and repository branches shown here are examples, not measured research results.
+These are screenshots of the real app using fictional demo data. Scores, machines and repository branches are fictional. The PDF annotation screenshot uses a published paper.
 
 ![Research workspace with linked pages and a clickable architecture diagram](docs/images/screenshots/research-workspace.png)
 
@@ -35,7 +35,7 @@ These are screenshots of the real app using fictional demo data. Scores, papers,
 
 [![PDF reader beside an editable research page, with a highlighted passage](docs/images/screenshots/paper-annotations.png)](docs/images/screenshots/paper-annotations.png)
 
-Open a paper beside your draft, highlight a passage and link that evidence back to a note.
+Open a paper beside your draft, highlight a passage and link it back to a note. Shown here: [Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114v11) by Diederik P. Kingma and Max Welling.
 
 </td>
 <td width="50%">

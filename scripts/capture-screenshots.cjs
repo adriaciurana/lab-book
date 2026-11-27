@@ -24,16 +24,37 @@ app.whenReady().then(async()=>{
   if(!architecture)throw Error('Demo architecture is missing');
   state.notes.push({...home,id:'screenshot-overview',title:'Research overview',parentNoteId:null,content:'<p>Fictional demo workspace · Connect evidence, plans and results.</p><h2>From evidence to experiment</h2>'+architecture});
   for(const note of state.notes){if(note.mock){note.published={title:note.title,content:note.content};note.draft=false}}
+  const paperId='screenshot-vae-paper';
+  const paperPdf=await fetch('https://arxiv.org/pdf/1312.6114v11');
+  if(!paperPdf.ok)throw Error('Could not download the example paper');
+  const fileData='data:application/pdf;base64,'+Buffer.from(await paperPdf.arrayBuffer()).toString('base64');
+  const imported=await fetch(base+'/api/papers/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fileData})});
+  if(!imported.ok)throw Error('Could not import the example paper');
+  state.papers.push({...await imported.json(),id:paperId,title:'Auto-Encoding Variational Bayes',authors:'Diederik P. Kingma and Max Welling',url:'https://arxiv.org/abs/1312.6114v11',highlights:[]});
+  state.notes.push({...home,id:'screenshot-vae',boardIds:[],title:'Variational autoencoders',parentNoteId:null,content:'<h2>Reading notes</h2><p>Study how reparameterization makes the variational objective practical to optimize with stochastic gradients.</p><h2>Questions to revisit</h2><ul><li>How is the latent posterior approximated?</li><li>What changes when the prior is learned?</li></ul><p><strong>Highlighted passage</strong></p>'});
   const saved=await fetch(base+'/api/state',{method:'PUT',headers:{'Content-Type':'application/json','If-Match':response.headers.get('X-Labbook-Revision')},body:JSON.stringify(state)});
   if(!saved.ok)throw Error('Unable to prepare demo pages: '+await saved.text());
   win=new BrowserWindow({show:false,width:1600,height:1000,useContentSize:true,webPreferences:{partition:'screenshot-session',backgroundThrottling:false,offscreen:true}});
   const evaluate=code=>win.webContents.executeJavaScript(code);
   async function settle(){await evaluate(`(async()=>{await document.fonts.ready;await Promise.all([...document.images].map(image=>image.decode().catch(()=>{})));await new Promise(resolve=>setTimeout(resolve,700))})()`)}
-  async function capture(name){win.webContents.invalidate();await settle();const screenshot=await win.webContents.capturePage();fs.writeFileSync(path.join(output,name+'.png'),screenshot.toPNG());console.log('Captured '+name)}
+  async function capture(name){if(process.env.LABBOOK_SCREENSHOT&&process.env.LABBOOK_SCREENSHOT!==name)return;win.webContents.invalidate();await settle();const screenshot=await win.webContents.capturePage();fs.writeFileSync(path.join(output,name+'.png'),screenshot.toPNG());console.log('Captured '+name)}
   await win.loadURL(base+'/notes/screenshot-overview');
   await evaluate("applyTheme('light')");
   await capture('research-workspace');
-  await evaluate("openEditor(state.notes.find(note=>note.id==='demo-video'));openPaperSplit(state.papers.find(paper=>paper.id==='demo-paper-video'))");
+  await evaluate(`(async()=>{
+   openEditor(state.notes.find(note=>note.id==='screenshot-vae'));
+   await openPaperSplit(state.papers.find(paper=>paper.id==='screenshot-vae-paper'));
+   const layer=document.querySelector('.paper-side-panel .textLayer');
+   const span=[...layer.querySelectorAll('span')].find(node=>node.firstChild?.nodeType===Node.TEXT_NODE&&node.textContent.includes('reparameterization'));
+   if(!span)throw Error('Passage missing from the PDF text layer');
+   const range=document.createRange();range.selectNodeContents(span);
+   const selection=getSelection();selection.removeAllRanges();selection.addRange(range);
+   layer.dispatchEvent(new PointerEvent('pointerup',{bubbles:true}));
+   await new Promise(resolve=>setTimeout(resolve,50));
+   document.querySelector('[data-link]').click();selection.removeAllRanges();
+   if(!document.querySelector('.reader-highlight')||!document.querySelector('.editor-body .paper-region-link'))throw Error('Expected a linked highlight');
+  })()`);
+  await evaluate("document.querySelector('#toast').classList.remove('show')");
   await capture('paper-annotations');
   await win.loadURL(base+'/views/demo-research-overview');
   await capture('task-boards');
