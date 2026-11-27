@@ -50,6 +50,25 @@ app.whenReady().then(async()=>{
    const payload=await result.json();
    if(!result.ok||new URL(payload.url).hostname!=='auth.openai.com')throw Error('ChatGPT login did not start');
   })()`);
+  await win.loadURL(base+'/agent');
+  await win.webContents.executeJavaScript(`(async()=>{
+   const wait=async selector=>{
+    for(let i=0;i<100;i++){
+     const element=document.querySelector(selector);
+     if(element)return element;
+     await new Promise(resolve=>setTimeout(resolve,25));
+    }
+    throw Error('Missing '+selector);
+   };
+   (await wait('[data-account-settings]')).click();
+   const form=await wait('form:has(select[name=mode])');
+   form.elements.mode.value='team';
+   form.elements.provider.value='claude';
+   form.elements.key.value='fixture';
+   form.requestSubmit();
+   const web=await wait('#includeWeb:disabled');
+   if(web.checked||!document.querySelector('#agentModel').textContent.includes('Claude'))throw Error('Claude controls were not refreshed');
+  })()`);
   memberWin=new BrowserWindow({show:false,webPreferences:{partition:'collaboration-member',backgroundThrottling:false}});
   await memberWin.loadURL(base);
   await submit(memberWin,{username:'member-ui',password:'initial member password'});

@@ -40,7 +40,7 @@
   const identity=document.createElement('p');identity.textContent=account.username+' · '+account.role;
   content.append(identity);
   const form=document.createElement('form');
-  form.innerHTML='<label>AI credentials<select name="mode"><option value="team">Shared team key</option><option value="personal">Personal keys</option></select></label><label>Provider<select name="provider"><option value="openai">OpenAI</option><option value="claude">Claude</option></select></label><label>API key<input name="key" type="password" autocomplete="new-password" placeholder="Leave blank to keep the saved key"></label><button class="btn primary">Save AI settings</button>';
+  form.innerHTML='<label>AI credentials<select name="mode"><option value="team">Shared team key</option><option value="personal">Personal credentials</option></select></label><label>Provider<select name="provider"><option value="openai">OpenAI</option><option value="claude">Claude</option></select></label><label>API key<input name="key" type="password" autocomplete="new-password" placeholder="Leave blank to keep the saved key"></label><button class="btn primary">Save AI settings</button>';
   const mode=form.elements.mode;mode.value=configuration.mode;
   form.elements.provider.value=configuration.provider==='claude'?'claude':'openai';
   mode.disabled=account.role!=='admin';
@@ -54,7 +54,7 @@
    content.append(info,connect);
    if(configuration.chatgptEmail){
     const disconnect=document.createElement('button');disconnect.type='button';disconnect.className='text-btn';disconnect.textContent='Disconnect ChatGPT from Lab Book';
-    disconnect.onclick=async()=>{try{await api('chatgpt',{disconnect:true});panel.close();await settings()}catch(error){panel.status(error.message)}};
+    disconnect.onclick=async()=>{try{await api('chatgpt',{disconnect:true});panel.close();if(currentView==='search')renderSearch();await settings()}catch(error){panel.status(error.message)}};
     content.append(disconnect);
    }
   }
@@ -91,7 +91,7 @@
   logout.onclick=async()=>{try{if(!flushDraft())return;await api('logout',{});location.reload()}catch(error){panel.status(error.message)}};
   form.onsubmit=async event=>{
    event.preventDefault();
-   try{const payload=Object.fromEntries(new FormData(form));await api('ai',payload);form.elements.key.value='';panel.close();await showSettings()}
+   try{const payload=Object.fromEntries(new FormData(form));await api('ai',payload);form.elements.key.value='';panel.close();if(currentView==='search')renderSearch();await showSettings()}
    catch(error){panel.status(error.message)}
   };
  }
@@ -141,7 +141,7 @@
  (async()=>{
   try{account=await api('me')}catch{return}
   const open=document.createElement('button');open.type='button';open.className='nav-item';
-  open.textContent='Account settings';open.onclick=()=>settings().catch(error=>toast(error.message));
+  open.dataset.accountSettings='';open.textContent='Account settings';open.onclick=()=>settings().catch(error=>toast(error.message));
   document.querySelector('.sidebar-bottom').prepend(open);
   new MutationObserver(renderSharing).observe(document.querySelector('#content'),{childList:true,subtree:true});
   renderSharing();
