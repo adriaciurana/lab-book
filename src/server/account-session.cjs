@@ -251,10 +251,10 @@ function createAccountGate(runtime) {
     if(pathname==='/api/account/members'&&req.method==='GET'&&user.role==='admin'){
       return runtime.json(res,200,registry.accounts.map(({id,username,role})=>({id,username,role})));
     }
-    if(user.role!=='admin'){
-      const work=require('./member-workspace.cjs');
+    const work=require('./member-workspace.cjs');
+    const readWorkspace=()=>work.read(runtime,user,{legacyOwner:registry.accounts[0]?.id===user.id});
       if(pathname==='/bootstrap.js'&&req.method==='GET'){
-        const {view}=work.read(runtime,user);
+        const {view}=readWorkspace();
         res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-store'});
         res.end('window.LABBOOK_ACCOUNT='+JSON.stringify(req.labbookUser)+';window.LABBOOK_ENV='+JSON.stringify(runtime.environment)+';window.LABBOOK_STATE_REVISION='+JSON.stringify(runtime.stateRevision())+';window.LABBOOK_SERVER_STATE='+JSON.stringify(view)+';');
         return true;
@@ -263,24 +263,26 @@ function createAccountGate(runtime) {
         if(req.method==='PUT'){
           const input=await runtime.readBody(req);
           if(!sessions.has(token))return runtime.json(res,401,{error:'Sign in again.'});
-          if(req.headers['if-match']!==runtime.stateRevision())return runtime.json(res,409,{error:'Workspace changed. Reload and retry.'});
-          try{work.write(runtime,user,input,work.read(runtime,user))}
+          if(runtime.stateRevision()!=='empty'&&req.headers['if-match']!==runtime.stateRevision())return runtime.json(res,409,{error:'Workspace changed. Reload and retry.'});
+          try{work.write(runtime,user,input,readWorkspace())}
           catch(error){return runtime.json(res,403,{error:error.message})}
           res.setHeader('X-Labbook-Revision',runtime.stateRevision());
           return runtime.json(res,200,{saved:true});
         }
         if(req.method==='GET'){
           res.setHeader('X-Labbook-Revision',runtime.stateRevision());
-          return runtime.json(res,200,work.read(runtime,user).view);
+          return runtime.json(res,200,readWorkspace().view);
         }
       }
+    if(pathname==='/api/search'&&req.method==='POST'){
+      const {view}=readWorkspace();
+      req.labbookAgentWorkspace={...view,...(user.role!=='admin'&&{context:[]})};
+      req.labbookMember=user.role!=='admin';
+      return false;
+    }
+    if(user.role!=='admin'){
       if(pathname==='/api/collab/presence'&&['GET','POST'].includes(req.method)){
         req.labbookVisibleNotes=new Set(work.read(runtime,user).view.notes.map(note=>note.id));
-        return false;
-      }
-      if(pathname==='/api/search'&&req.method==='POST'){
-        const {view}=work.read(runtime,user);
-        req.labbookAgentWorkspace={...view,context:[]};
         return false;
       }
       if(pathname.startsWith('/api/'))return runtime.json(res,403,{error:'This operation requires an administrator.'});

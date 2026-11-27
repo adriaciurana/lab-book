@@ -11,17 +11,25 @@ function role(note,user,shares){
   return granted?.role||(note.visibility==='workspace'?'view':null);
 }
 
-function personalState(filename){
-  if(!fs.existsSync(filename))return {};
-  const data=JSON.parse(fs.readFileSync(filename,'utf8'));
-  return Object.fromEntries(['agentChats','activeAgentChatId','context'].filter(key=>Object.hasOwn(data,key)).map(key=>[key,data[key]]));
+const personalKeys=['agentChats','activeAgentChatId','context'];
+function pickPersonal(data){
+  return Object.fromEntries(personalKeys.filter(key=>Object.hasOwn(data,key)).map(key=>[key,data[key]]));
+}
+function personalState(filename,fallback={}){
+  return pickPersonal(fs.existsSync(filename)?JSON.parse(fs.readFileSync(filename,'utf8')):fallback);
 }
 
-function read(runtime,user){
+function read(runtime,user,{legacyOwner=false}={}){
   const stored=fs.existsSync(runtime.stateFile)?JSON.parse(fs.readFileSync(runtime.stateFile,'utf8')):{};
   const notes=(stored.notes||[]).filter(note=>role(note,user,stored.shares||[]));
   const ids=new Set(notes.map(note=>note.id));
   const personal=path.join(runtime.dataRoot,'private',runtime.environment+'-'+user.id+'.json');
+  if(user.role==='admin'){
+    const view={...stored};
+    for(const key of personalKeys)delete view[key];
+    Object.assign(view,personalState(personal,legacyOwner?stored:{}));
+    return {stored,view:Object.keys(stored).length?view:null,personal,legacyOwner};
+  }
   const view=model.ensure({
     folders:[{id:'inbox',name:'Inbox'}],papers:[],
     notes:notes.map(note=>({...note,accessRole:role(note,user,stored.shares||[]),folder:'inbox',boardIds:[],parentNoteId:ids.has(note.parentNoteId)?note.parentNoteId:null})),
@@ -51,7 +59,17 @@ function safeNote(note){
 }
 
 function write(runtime,user,input,current){
-  const {stored,view,personal}=current;
+  const {stored,view,personal,legacyOwner}=current;
+  if(user.role==='admin'){
+    if(!Array.isArray(input.notes)||!Array.isArray(input.folders))throw Error('Invalid workspace state.');
+    const next={...input};
+    for(const key of personalKeys)delete next[key];
+    if(!legacyOwner)Object.assign(next,pickPersonal(stored));
+    model.validate(structuredClone(next));
+    runtime.atomicWrite(personal,JSON.stringify(pickPersonal(input)));
+    runtime.atomicWrite(runtime.stateFile,JSON.stringify(next));
+    return;
+  }
   if(!Array.isArray(input.notes))throw Error('Invalid note list.');
   const rows=stored.notes||=[];
   const notes=new Map(rows.map(note=>[note.id,note]));
@@ -73,8 +91,7 @@ function write(runtime,user,input,current){
   if(view.notes.some(note=>!submitted.has(note.id)))throw Error('Removing pages requires an administrator.');
   const revision=runtime.stateRevision();
   model.validate(structuredClone(stored));
-  const profile={};
-  for(const key of ['agentChats','activeAgentChatId','context'])if(Object.hasOwn(input,key))profile[key]=input[key];
+  const profile=pickPersonal(input);
   if(!isDeepStrictEqual(stored,fs.existsSync(runtime.stateFile)?JSON.parse(fs.readFileSync(runtime.stateFile,'utf8')):{})){
     if(runtime.stateRevision()!==revision)throw Error('Workspace changed. Reload and retry.');
     runtime.atomicWrite(runtime.stateFile,JSON.stringify(stored));

@@ -102,6 +102,18 @@ test('separate administrator and member sessions enforce read, edit and AI polic
   const upgraded=await call('/api/account/login',{body:{username:'reader',password:'permanent member password'}});
   const upgradedCookie=upgraded.headers.get('set-cookie').split(';')[0];
   assert.equal((await(await call('/api/account/me',{cookie:upgradedCookie})).json()).role,'admin');
+  const ownerSnapshot=await call('/api/state',{cookie:admin});
+  const ownerState=await ownerSnapshot.json();
+  ownerState.agentChats=[{id:'owner-chat',messages:[{text:'owner-only conversation'}]}];
+  assert.equal((await call('/api/state',{cookie:admin,method:'PUT',body:ownerState,revision:ownerSnapshot.headers.get('x-labbook-revision')})).status,200);
+  const secondSnapshot=await call('/api/state',{cookie:upgradedCookie});
+  const secondState=await secondSnapshot.json();
+  assert.equal(secondState.agentChats,undefined);
+  secondState.agentChats=[{id:'second-chat',messages:[]}];
+  assert.equal((await call('/api/state',{cookie:upgradedCookie,method:'PUT',body:secondState,revision:secondSnapshot.headers.get('x-labbook-revision')})).status,200);
+  assert.equal((await(await call('/api/state',{cookie:admin})).json()).agentChats[0].id,'owner-chat');
+  assert.doesNotMatch(fs.readFileSync(runtime.stateFile,'utf8'),/owner-only conversation/);
+
   assert.equal((await call('/api/account/member-access',{cookie:admin,body:{id,revoke:true}})).status,200);
   assert.equal((await call('/api/state',{cookie:upgradedCookie})).status,401);
 

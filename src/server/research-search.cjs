@@ -26,7 +26,7 @@ async function handle(req,res,getKey,{fetchImpl=fetch}={}){
  try{
   let body='';for await(const chunk of req){body+=chunk;if(body.length>3000000)throw Error('Request is too large')}
   const input=JSON.parse(body);
-  if(req.labbookAgentWorkspace&&(input.context||[]).some(source=>['attachment','paper','region'].includes(source.type)))throw Error('Members can use page and paragraph context.');
+  if(req.labbookMember&&(input.context||[]).some(source=>['attachment','paper','region'].includes(source.type)))throw Error('Members can use page and paragraph context.');
   if(req.labbookAI?.provider==='claude'){
    const key=req.labbookAI.key;
    if(!key)return send(503,{error:'Configure a Claude API key in Account settings.'});
