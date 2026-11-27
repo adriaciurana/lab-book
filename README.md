@@ -175,3 +175,13 @@ deploy/        Service and reverse proxy examples
 ```
 
 Browser asset URLs stay stable. The server exposes client assets and shared modules without exposing server source. Workspace data remains under the existing `data/` directory; this reorganization does not require a migration. Launch from the project root with the shell launchers or npm scripts.
+
+### Administrator and member accounts
+
+Run `./install.sh --setup-admin` to create an administrator for a new managed workspace. Choose a temporary password of at least 12 characters. The first sign-in requires setting a different password. Serve managed workspaces over HTTPS for network access and set `LABBOOK_HTTPS=1` when TLS is terminated by a trusted proxy.
+
+Use **Account settings** to add members and choose a shared team key or personal keys for **My agent**. A member who uses personal credentials gets a setup reminder until a key is configured. The workspace policy supports OpenAI and Claude API keys. Claude chat currently supports text responses without web search, attachments or structured workspace proposals.
+
+Open a page and choose **Share** to set its visibility to private, workspace-wide read access or selected members. Give specific members **Can view** or **Can edit**. The administrator can manage all pages. Member workspace views currently cover notes and personal chat history. Boards, experiment registries, PDFs and administration remain restricted to the administrator. Member-authored notes support basic rich text, and unsupported markup is stripped on save.
+
+In a managed workspace with personal AI credentials enabled, **Continue with ChatGPT** is available when browsing Lab Book at `http://127.0.0.1:<port>`. For a server on another machine, use a trusted SSH tunnel with the same local and remote port, then sign in through the forwarded address. The ChatGPT permission is tied to the active Lab Book account. Lab Book stores its OAuth credentials in the server's protected account registry and uses the plan only for eligible chat requests. You can revoke access in [ChatGPT Settings](https://chatgpt.com/#settings). The shared key remains available when the administrator selects team mode.

@@ -16,3 +16,43 @@ require('node:test').test('chat model overrides the server default for proposal 
  assert.ok(request.text.format);
  assert.throws(()=>buildRequest({query:'Hello',model:'unknown'}),/supported chat model/);
 });
+
+require('node:test').test('Claude chat uses the selected credential and maps text to the chat response', async ()=>{
+ const assert=require('node:assert/strict');
+ const {Readable}=require('node:stream');
+ const {handle}=require('../src/server/research-search.cjs');
+ const req=Readable.from([JSON.stringify({query:'Summarize',webSearch:false})]);
+ req.labbookAI={provider:'claude',key:'fixture-claude'};
+ let status,body;
+ await handle(req,{writeHead(code){status=code},end(raw){body=JSON.parse(raw)}},()=>{throw Error('Unexpected fallback')},{
+  fetchImpl:async(url,options)=>{
+   assert.equal(url,'https://api.anthropic.com/v1/messages');
+   assert.equal(options.headers['x-api-key'],'fixture-claude');
+   assert.match(JSON.parse(options.body).messages.at(-1).content,/Summarize/);
+   return Response.json({content:[{type:'text',text:'A summary.'}]});
+  }
+ });
+ assert.equal(status,200);
+ assert.equal(body.output_text,'A summary.');
+});
+
+require('node:test').test('connected ChatGPT plan uses its own model catalog and OAuth bearer', async ()=>{
+ const assert=require('node:assert/strict');
+ const {Readable}=require('node:stream');
+ const {handle}=require('../src/server/research-search.cjs');
+ const req=Readable.from([JSON.stringify({query:'Summarize',model:'plan-model',webSearch:false})]);
+ req.labbookAI={provider:'chatgpt',planModels:async()=>[{id:'plan-model',label:'Plan model'}],planToken:async()=>'fixture-oauth'};
+ let status,body;
+ await handle(req,{writeHead(code){status=code},end(raw){body=JSON.parse(raw)}},()=>{throw Error('Team key must not be used')},{
+  fetchImpl:async(url,options)=>{
+   assert.equal(options.headers.Authorization,'Bearer fixture-oauth');
+   const request=JSON.parse(options.body);
+   assert.equal(request.model,'plan-model');
+   assert.equal(request.stream,true);
+   assert.ok(Array.isArray(request.input));
+   return new Response('data: '+JSON.stringify({type:'response.completed',response:{output_text:'A summary.'}})+'\n\n');
+  }
+ });
+ assert.equal(status,200);
+ assert.equal(body.output_text,'A summary.');
+});

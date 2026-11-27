@@ -78,6 +78,7 @@ function scheduleDraft(){persistDraft()}
 function flushDraft(){clearTimeout(draftTimer);return persistDraft()}
 const originalOpenEditor=openEditor;
 openEditor=function(note){
+  if(note?.accessRole==='view'){toast('This page is read only');return}
   if(!flushDraft())return;
   bodyChanges.disconnect();
   if(!note){note={id:crypto.randomUUID(),title:'Untitled research note',type:'✎',

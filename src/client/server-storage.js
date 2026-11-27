@@ -5,7 +5,7 @@ if(!isolatedWorkspace){
     state=window.LABBOOK_SERVER_STATE;
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   }else{
-    const legacy=localStorage.getItem(STORAGE_KEY)||(LABBOOK_ENV==='production'&&localStorage.getItem('labbook-state'));
+    const legacy=localStorage.getItem(STORAGE_KEY)||(!window.LABBOOK_ACCOUNT&&LABBOOK_ENV==='production'&&localStorage.getItem('labbook-state'));
     if(legacy){try{state=JSON.parse(legacy)}catch{document.querySelector('#saveStatus').textContent='Unable to read the local recovery copy'}}
   }
 }

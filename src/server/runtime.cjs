@@ -89,7 +89,7 @@ async function handle(req,res){
  if(url.pathname==='/bootstrap.js'){
   const stored=fs.existsSync(stateFile)?JSON.parse(fs.readFileSync(stateFile,'utf8')):null;
   res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});
-  res.end('window.LABBOOK_ENV='+JSON.stringify(environment)+';window.LABBOOK_STATE_REVISION='+JSON.stringify(stateRevision())+';window.LABBOOK_SERVER_STATE='+JSON.stringify(stored)+';');return true;
+  res.end('window.LABBOOK_ACCOUNT='+JSON.stringify(req.labbookUser||null)+';window.LABBOOK_ENV='+JSON.stringify(environment)+';window.LABBOOK_STATE_REVISION='+JSON.stringify(stateRevision())+';window.LABBOOK_SERVER_STATE='+JSON.stringify(stored)+';');return true;
  }
  if(url.pathname==='/api/environments'&&req.method==='POST'){const input=await readBody(req,10000);json(res,201,require('./launch-config.cjs').create(input));return true}
  if(url.pathname==='/api/environments'&&req.method==='GET'){json(res,200,require('./launch-config.cjs').load().environments);return true}
@@ -119,8 +119,15 @@ async function handle(req,res){
   return json(res,200,{environment,generatedAt:new Date().toISOString(),staleDays:days,findings,summary:{notes:findings.filter(x=>x.kind==='note').length,tasks:findings.filter(x=>x.kind==='task').length,experiments:findings.filter(x=>x.kind==='experiment').length,papers:findings.filter(x=>x.kind==='paper').length}});
  }
  if(url.pathname==='/api/collab/presence'&&(req.method==='GET'||req.method==='POST')){
-  const body=req.method==='POST'?await readBody(req,10000):{};if(req.method==='POST'&&body.userId){presence.set(body.userId,{...body,lastSeen:Date.now()});audit({action:'presence',userId:body.userId,noteId:body.noteId||null})}
-  const active=[...presence.values()].filter(x=>Date.now()-x.lastSeen<30000);return json(res,200,{users:active});
+  const body=req.method==='POST'?await readBody(req,10000):{};
+  const user=req.labbookUser;
+  const userId=user?.id||body.userId;
+  if(req.method==='POST'&&userId){
+   if(req.labbookVisibleNotes&&!req.labbookVisibleNotes.has(body.noteId))return json(res,404,{error:'Page not available.'});
+   presence.set(userId,{userId,name:user?.username||body.name,noteId:body.noteId||null,lastSeen:Date.now()});
+  }
+  const active=[...presence.values()].filter(entry=>Date.now()-entry.lastSeen<30000&&(!req.labbookVisibleNotes||req.labbookVisibleNotes.has(entry.noteId)));
+  return json(res,200,{users:active});
  }
  if(url.pathname.startsWith('/api/collab/notes/')&&req.method==='PATCH'){
   if(req.headers['if-match']!==stateRevision()){json(res,409,{error:'Reload the workspace before saving. A current revision is required.'});return true}

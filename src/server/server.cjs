@@ -23,12 +23,15 @@ function parseModelJson(text,filename){
   if(start>=0&&end>start){try{return JSON.parse(cleaned.slice(start,end+1))}catch{}}
   return fallback;
 }
+const accountGate=require('./account-session.cjs').createAccountGate(runtime);
 const server = http.createServer(async(req,res)=>{
-  try{if(await runtime.handle(req,res))return}catch(error){if(!res.headersSent&&!res.writableEnded)runtime.json(res,400,{error:error.message});return}
+  try{if(await accountGate(req,res)||await runtime.handle(req,res))return}catch(error){if(!res.headersSent&&!res.writableEnded)runtime.json(res,400,{error:error.message});return}
   if(req.url.split('?')[0]==='/api/research-attachments'||req.url.startsWith('/api/research-attachments/'))return require('./research-attachments.cjs').handle(req,res);
   if(req.method==='POST' && req.url==='/api/agent/develop-page')return require('./detailed-pages.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/agent/edit')return require('./editor-agent.cjs').handle(req,res,configuredKey);
-  if(req.method==='POST' && req.url==='/api/search')return require('./research-search.cjs').handle(req,res,configuredKey);
+  if(req.method==='POST' && req.url==='/api/search')return require('./research-search.cjs').handle(req,res,()=>req.labbookAI
+    ? req.labbookAI.key||(req.labbookAI.allowServerKey?configuredKey():'')
+    : configuredKey());
   if(req.method==='POST' && req.url==='/api/diagrams/generate')return require('./diagram-service.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && req.url==='/api/diagrams/harmonize')return require('./diagram-harmonize.cjs').handle(req,res,configuredKey);
   if(req.method==='POST' && ['/api/papers/summary','/api/papers/metadata'].includes(req.url))return require('./paper-service.cjs').handle(req,res);
