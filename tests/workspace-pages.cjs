@@ -1,9 +1,15 @@
 const {app,BrowserWindow}=require('electron');
 const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const dataDirectory=fs.mkdtempSync(path.join(os.tmpdir(),'labbook-workspace-pages-'));
+process.env.LABBOOK_DATA_DIR=dataDirectory;
+const server=require('../src/server/server.cjs');
 app.whenReady().then(async()=>{
  const win=new BrowserWindow({show:false,webPreferences:{partition:'workspace-pages-regression'}});
  try{
-  await win.loadURL('http://localhost:4173/inbox?isolated=1');
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const base='http://127.0.0.1:'+server.address().port;
+  await win.loadURL(base+'/inbox?isolated=1');
   const ids=await win.webContents.executeJavaScript(`(async()=>{
    const assert=(value,message)=>{if(!value)throw Error(message)},tick=()=>new Promise(r=>setTimeout(r,80));
    document.querySelector('#addFolderBtn').click();
@@ -49,10 +55,11 @@ app.whenReady().then(async()=>{
   assert.equal(await win.webContents.executeJavaScript(`document.querySelector('.architecture-frame').contentDocument.querySelector('[data-diagram-target]')?.id`),'details');
   await win.webContents.executeJavaScript(`document.querySelector('.architecture-frame').contentDocument.querySelector('svg a').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))`);
   assert.equal(await win.webContents.executeJavaScript('activeNoteId'),ids.child,'SVG shape link did not open child note');
-  await win.loadURL('http://localhost:4173/notes/'+ids.id+'?isolated=1');
+  await win.loadURL(base+'/notes/'+ids.id+'?isolated=1');
   await win.webContents.executeJavaScript(`(async()=>{
    const assert=(value,message)=>{if(!value)throw Error(message)};
    assert(activeNoteId===${JSON.stringify(ids.id)},'page URL reload failed');
+   document.querySelector('#editPublishedNote').click();
    assert(document.querySelector('.architecture-frame'),'reload lost diagram');
    assert(currentDraftNote().boardIds.includes(${JSON.stringify(ids.boardId)}),'reload lost board relation');
    assert(state.notes.filter(n=>n.parentNoteId===activeNoteId).length===4,'reload lost children');
@@ -63,6 +70,7 @@ app.whenReady().then(async()=>{
    document.querySelector('#addFolderBtn').click();document.querySelector('[data-create-folder]').click();
    assert(document.querySelector('#folderModal.open'),'folder creation regressed');
   })()`);
-  console.log('PASS: templates, ordinary documents, nested pages, linked board, sandboxed HTML/SVG links, diagram editing, autosave/navigation/reload, blank pages, folder dialog');app.exit(0);
- }catch(error){console.error(error);app.exit(1)}
+  console.log('PASS: templates, ordinary documents, nested pages, linked board, sandboxed HTML/SVG links, diagram editing, autosave/navigation/reload, blank pages, folder dialog');
+ }catch(error){console.error(error);process.exitCode=1}
+ finally{win.destroy();await new Promise(resolve=>server.close(resolve));fs.rmSync(dataDirectory,{recursive:true,force:true});app.exit(process.exitCode||0)}
 });
