@@ -2,6 +2,8 @@
 
 # Lab Book
 
+> You could absolutely build this with AI. I got there first so you don’t have to spend your tokens building it again.
+
 <p align="center">
   <a href="src/client"><img alt="JavaScript, HTML and CSS" src="https://img.shields.io/badge/JavaScript-HTML%20%26%20CSS-f7df1e?style=flat-square&amp;logo=javascript&amp;logoColor=black"></a>
   <a href="package.json"><img alt="Node.js 22 or newer" src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&amp;logo=nodedotjs&amp;logoColor=white"></a>
