@@ -18,3 +18,28 @@ function enhanceTaskPageSelect(select){
  select.addEventListener('change',update);select.addEventListener('page-picker-refresh',()=>{update();if(!popover.hidden)paint()});update();
  const controller=new AbortController();document.addEventListener('pointerdown',e=>{if(!picker.contains(e.target))close()},{signal:controller.signal});const observer=new MutationObserver(()=>{if(!picker.isConnected){controller.abort();observer.disconnect()}});observer.observe(document.body,{childList:true});
 }
+
+// A combined view changes presentation only. Always move within the source board.
+function bindTaskStatusControls(root,refresh){
+ root.querySelectorAll('.task[data-task]').forEach(card=>{
+  const task=state.tasks.find(item=>item.id===card.dataset.task);
+  const board=state.boards.find(item=>item.id===task?.board);
+  if(!board||board.columns.length<2||card.querySelector('.task-status-control'))return;
+  const select=document.createElement('select');
+  select.className='task-status-control';
+  select.setAttribute('aria-label','Move '+task.text+' to column');
+  select.title='Move to a column in '+board.name;
+  for(const column of board.columns)select.add(new Option(column,column,false,column===task.col));
+  select.addEventListener('click',event=>event.stopPropagation());
+  select.addEventListener('dragstart',event=>{event.preventDefault();event.stopPropagation()});
+  select.addEventListener('change',()=>{
+   const target=select.value;
+   try{hubCommit('tasks',task.id,{col:target})}
+   catch(error){select.value=task.col;toast(error.message);return}
+   refresh();
+   document.querySelector('.task[data-task="'+CSS.escape(task.id)+'"] .task-status-control')?.focus();
+   toast('Moved to '+target);
+  });
+  card.append(select);
+ });
+}

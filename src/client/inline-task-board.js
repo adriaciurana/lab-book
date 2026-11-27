@@ -15,5 +15,6 @@ function bindInlineTaskBoards(root){
    lane.ondrop=e=>{e.preventDefault();e.stopPropagation();lane.classList.remove('drag-over');const task=state.tasks.find(t=>t.id===activeDragTask);activeDragTask=null;if(!task)return;if(task.board!==board.id){toast('Move tasks between columns in their own board.');return}try{hubCommit('tasks',task.id,{col:lane.dataset.inlineColumn});refreshHubScreen()}catch(error){toast(error.message)}};
   });
   linkTaskPages(boardElement);
+  bindTaskStatusControls(boardElement,refreshHubScreen);
  });
 }

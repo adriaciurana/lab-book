@@ -135,3 +135,10 @@ document.addEventListener('click',event=>{
 window.addEventListener('beforeunload',event=>{if(!flushDraft()){event.preventDefault();event.returnValue=''}});
 window.addEventListener('pagehide',flushDraft);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)flushDraft()});
+
+document.addEventListener('keydown',event=>{
+  if(!(event.metaKey||event.ctrlKey)||event.key.toLowerCase()!=='s')return;
+  if(!activeBody?.isConnected||!currentDraftNote()||document.querySelector('.modal-backdrop.open'))return;
+  event.preventDefault();
+  if(flushDraft())toast('Draft saved');
+});

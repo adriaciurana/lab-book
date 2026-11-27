@@ -17,7 +17,7 @@ app.whenReady().then(async()=>{
    search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert(document.querySelector('#hubTaskPage').value==='methods','keyboard page link failed');
    document.querySelector('#hubSave').click();let task=state.tasks[0];assert(task.col==='Running'&&task.board==='video'&&task.noteId==='methods','task not saved in target column / page');
    assert(document.querySelector('.task-note-link').textContent.includes('Ablation protocol'),'card page link missing');
-   document.querySelector('.task-note-link').click();await tick();assert(document.querySelector('.editor .title').value==='Ablation protocol','card link did not open page');assert(!document.querySelector('#hubTaskTitle'),'page link opened task modal');
+   document.querySelector('.task-note-link').click();await tick();assert(location.pathname==='/notes/methods'&&document.querySelector('#content').textContent.includes('Ablation protocol'),'card link did not open page');assert(!document.querySelector('#hubTaskTitle'),'page link opened task modal');
    currentView='board-view';window.activeBoardView='combined';render();document.querySelector('[data-column-add-task="Active"]').click();
    assert(document.querySelector('#hubTaskDestination').options.length===2,'combined view needs destination choices');
    document.querySelector('#hubTaskTitle').value='Ship implementation';const destination=document.querySelector('#hubTaskDestination');destination.value='1';destination.dispatchEvent(new Event('change'));

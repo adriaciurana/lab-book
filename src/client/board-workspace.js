@@ -58,6 +58,6 @@ function renderTaskBoardWorkspace({mode='individual',id}={}){
  }
  document.querySelector('#addTask')?.addEventListener('click',()=>addTaskToColumn(item.columns[0]));
  content.querySelectorAll('.kanban-col').forEach(column=>{appendColumnTaskButton(column,()=>addTaskToColumn(combined?column.dataset.viewCol:column.dataset.col));column.ondragover=e=>{e.preventDefault();column.classList.add('drag-over')};column.ondragleave=()=>column.classList.remove('drag-over')});
- content.querySelectorAll('.task').forEach(card=>{card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openTaskModal(card.dataset.task)}};card.ondragstart=e=>{dragged={type:'task',id:card.dataset.task};e.dataTransfer.effectAllowed='move'}});linkTaskPages(content);
+ content.querySelectorAll('.task').forEach(card=>{card.onkeydown=e=>{if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();openTaskModal(card.dataset.task)}};card.ondragstart=e=>{dragged={type:'task',id:card.dataset.task};e.dataTransfer.effectAllowed='move'}});linkTaskPages(content);bindTaskStatusControls(content,redraw);
  syncTaskBoardRoute(mode,item.id);
 }

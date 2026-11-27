@@ -27,6 +27,14 @@ app.whenReady().then(async()=>{
    const card=document.querySelector('[data-task="'+created.id+'"]'),dt=new DataTransfer();card.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:dt}));document.querySelector('[data-view-col="Done"]').dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:dt}));
    created=state.tasks.find(t=>t.id===created.id);assert(created.board==='a'&&created.col==='Done','filtered aggregate drag changed board or lost source status');
    assert(document.querySelector('#boardStreamFilter').value==='page:stream-a','drag reset filter');
+   const status=document.querySelector('[data-task="'+created.id+'"] .task-status-control');
+   const originalBoard=state.boards.find(board=>board.id==='a');
+   const target=originalBoard.columns.find(column=>column!=='Done');
+   status.value=target;status.dispatchEvent(new Event('change',{bubbles:true}));
+   const moved=state.tasks.find(task=>task.id===created.id);
+   assert(moved.board==='a'&&moved.col===target,'Status control did not move within source board');
+   assert(document.querySelector('#boardStreamFilter').value==='page:stream-a','Status move reset filter');
+
    document.querySelector('[data-board-mode="individual"]').click();assert(location.pathname==='/boards/a','individual navigation failed');assert(document.querySelector('#boardStreamFilter').value==='page:stream-a','switch lost compatible filter');
    filter('taskBoardViewSelect','b');assert(document.querySelector('#boardStreamFilter').value===''&&document.querySelectorAll('.task').length===2,'switch retained incompatible stream filter');
    document.querySelector('[data-board-mode="combined"]').click();assert(location.pathname==='/views/all','combined navigation failed');assert(color('a1')===ca&&color('b1')===cb,'stream colors changed after switching modes');

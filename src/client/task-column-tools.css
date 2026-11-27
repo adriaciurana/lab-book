@@ -11,3 +11,10 @@ body select.task-page-native{display:none!important}.task-page-picker{position:r
 .task-page-popover{position:absolute;z-index:30;top:calc(100% + 7px);width:100%;box-sizing:border-box;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:var(--shadow)}.task-page-popover[hidden]{display:none}
 #composerModal .task-page-search{width:100%;box-sizing:border-box;margin:0;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:13px}
 #taskPageChoices{max-height:230px;overflow:auto;padding-top:6px}#taskPageChoices [role="option"]{padding:10px;border-radius:7px;cursor:pointer}#taskPageChoices [role="option"].is-active{background:var(--hover)}#taskPageChoices [aria-selected="true"]{background:var(--selection)}#taskPageChoices strong{display:block;font-weight:500;font-size:13px;overflow-wrap:anywhere}#taskPageChoices small{display:block;color:var(--muted);font-size:11px;line-height:1.5;margin-top:4px}.task-page-empty{padding:10px;font-size:12px}
+
+.task .task-status-control{
+ width:100%;min-width:0;min-height:36px;margin-top:8px;
+ padding:4px 8px;border:1px solid var(--line);border-radius:6px;
+ background:var(--panel);color:var(--ink);
+}
+@media(max-width:700px){.task .task-status-control{min-height:44px}}
