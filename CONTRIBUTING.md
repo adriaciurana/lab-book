@@ -36,3 +36,8 @@ For UI changes, check both themes and a narrow viewport. Try the affected flow w
 3. Review the diff for credentials, local configuration, personal PDFs and workspace data. Use fictional examples in fixtures and screenshots.
 
 Lab Book is licensed under the [MIT License](LICENSE).
+
+
+### Credentials and local files
+
+Keep API keys, OAuth tokens, workspace data, and private certificates in local configuration or your secret store. Use dummy values in examples and test fixtures. Before publishing, review the staged diff and run a redacted secret scan with `gitleaks git --redact=100`. The LAN deployment script takes its SSH destination from `LABBOOK_DEPLOY_TARGET` and publishes the committed Git tree.

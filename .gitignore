@@ -151,7 +151,10 @@ activemq-data/
 
 # Environments
 .env
+.env.*
+!.env.example
 .envrc
+.npmrc.local
 .venv
 env/
 venv/
@@ -223,5 +226,13 @@ __marimo__/
 
 # Local launcher settings and generated reports
 labbook.config.json
+labbook.config.local.json
+accounts.json
+accounts.json.*
+lab-book-admin-temporary.*
+*.pem
+*.key
+*.p12
+*.pfx
 coverage/
 .DS_Store
