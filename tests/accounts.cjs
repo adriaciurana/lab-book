@@ -70,11 +70,24 @@ test('separate administrator and member sessions enforce read, edit and AI polic
     assert.equal(change.status,200);
     return cookie;
   }
+  const outbound=[];
+  const localFetch=global.fetch;
+  t.mock.method(global,'fetch',(url,options)=>{
+    if(String(url).startsWith(base+'/'))return localFetch(url,options);
+    outbound.push({
+      url,
+      authorization:options.headers.Authorization,
+      claudeKey:options.headers['x-api-key'],
+    });
+    const claude=url==='https://api.anthropic.com/v1/messages';
+    return Promise.resolve(Response.json(claude?{content:[{type:'text',text:'Claude fixture'}]}:{output_text:'OpenAI fixture'}));
+  });
+  const ask=cookie=>call('/api/search',{cookie,body:{query:'Summarize the results',webSearch:false}});
   const admin=await login('admin','initial admin password','permanent admin password');
   const pending=await(await call('/api/account/ai',{cookie:admin})).json();
   assert.equal(pending.setupRequired,true);
   assert.equal((await call('/api/search',{cookie:admin,body:{query:'test'}})).status,428);
-  assert.equal((await call('/api/account/ai',{cookie:admin,body:{mode:'team',provider:'openai',key:'team-fixture-secret'}})).status,200);
+  assert.equal((await call('/api/account/ai',{cookie:admin,body:{mode:'team',provider:'claude',key:'team-fixture-secret'}})).status,200);
   const team=await(await call('/api/account/ai',{cookie:admin})).json();
   assert.equal(team.setupRequired,false);
   assert.equal(team.mode,'team');
@@ -84,6 +97,14 @@ test('separate administrator and member sessions enforce read, edit and AI polic
   assert.equal(added.status,201);const {id}=await added.json();
   const member=await login('reader','initial member password','permanent member password');
   assert.equal((await call('/api/account/members',{cookie:member})).status,403);
+  for(const cookie of [admin,member]){
+    const answer=await ask(cookie);
+    assert.equal(answer.status,200);
+    assert.equal((await answer.json()).output_text,'Claude fixture');
+  }
+  assert.deepEqual(outbound.splice(0),Array(2).fill({
+    url:'https://api.anthropic.com/v1/messages',authorization:undefined,claudeKey:'team-fixture-secret',
+  }));
   runtime.atomicWrite(runtime.stateFile,JSON.stringify({folders:[{id:'inbox',name:'Inbox'}],notes:[{id:'public-note',title:'Shared',content:'<p>Original</p>'},{id:'secret-note',title:'Hidden',visibility:'private',content:'Private text'}]}));
   const share=role=>call('/api/account/share',{cookie:admin,body:{noteId:'public-note',visibility:'shared',grants:[{userId:id,role}]}});
   assert.equal((await share('view')).status,200);
@@ -101,7 +122,16 @@ test('separate administrator and member sessions enforce read, edit and AI polic
   assert.equal(adminView.notes[1].content,'Private text');
   assert.equal((await call('/api/account/ai',{cookie:admin,body:{mode:'personal',provider:'openai'}})).status,200);
   assert.equal((await call('/api/account/ai',{cookie:member,body:{mode:'team',provider:'openai',key:'ignored'}})).status,403);
+  assert.equal((await ask(member)).status,503);
+  assert.equal(outbound.length,0);
   assert.equal((await call('/api/account/ai',{cookie:member,body:{provider:'openai',key:'member-fixture-secret'}})).status,200);
+  const personal=await ask(member);
+  assert.equal(personal.status,200);
+  assert.equal((await personal.json()).output_text,'OpenAI fixture');
+  assert.equal((await ask(admin)).status,503);
+  assert.deepEqual(outbound.splice(0),[{
+    url:'https://api.openai.com/v1/responses',authorization:'Bearer member-fixture-secret',claudeKey:undefined,
+  }]);
   const settings=await(await call('/api/account/ai',{cookie:member})).json();
   assert.equal(settings.mode,'personal');assert.equal(settings.provider,'openai');assert.equal(settings.configured,true);
   assert.equal((await(await call('/api/state',{cookie:admin})).text()).includes('member-fixture-secret'),false);
