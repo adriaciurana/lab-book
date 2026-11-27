@@ -2,6 +2,7 @@
   "name": "lab-book",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "A calm research workspace for papers, notes and experiments.",
   "main": "src/electron/main.cjs",
   "scripts": {

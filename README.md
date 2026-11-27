@@ -12,7 +12,7 @@
   <a href="https://github.com/adriaciurana/lab-book/actions/workflows/test.yml"><img alt="Tests and coverage workflow status" src="https://github.com/adriaciurana/lab-book/actions/workflows/test.yml/badge.svg"></a>
   <a href="#development-and-verification"><img alt="Status: early alpha" src="https://img.shields.io/badge/status-early%20alpha-d9a32a?style=flat-square"></a>
   <a href="#configuration-and-access"><img alt="Storage: local files" src="https://img.shields.io/badge/storage-local%20files-1f3b2d?style=flat-square"></a>
-  <a href="CONTRIBUTING.md"><img alt="License: not selected" src="https://img.shields.io/badge/license-not%20selected-777777?style=flat-square"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-22863a?style=flat-square"></a>
 </p>
 
 A local research workspace that connects papers, annotated PDFs, nested notes, task boards and experiments. Use it in your browser or as an Electron desktop app. Your workspace stays in local files; optional AI features send selected context to OpenAI.
@@ -155,7 +155,7 @@ npm run package:desktop
 
 The default test suite covers isolated server persistence, the research API, typed columns, lifecycle behavior, environment configuration and SOTA scheduling. Coverage uses Node's built-in instrumentation and prints measured results; it is not a claim of full UI coverage. Additional `test:*` scripts exercise Electron browser flows and generally require a running local server. Tests use simulated AI responses and temporary storage.
 
-CI runs the default suite with coverage on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution checks and [SECURITY.md](SECURITY.md) for reporting issues. No open-source license has been selected yet; public visibility alone does not grant redistribution rights.
+CI runs the default suite with coverage on Linux. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution checks and [SECURITY.md](SECURITY.md) for reporting issues. Lab Book is licensed under the [MIT License](LICENSE).
 
 ## Project structure
 
