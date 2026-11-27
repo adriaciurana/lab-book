@@ -178,7 +178,7 @@ Browser asset URLs stay stable. The server exposes client assets and shared modu
 
 ### Administrator and member accounts
 
-Run `./install.sh --setup-admin` to create an administrator for a new managed workspace. Choose a temporary password of at least 12 characters. The first sign-in requires setting a different password. Serve managed workspaces over HTTPS for network access and set `LABBOOK_HTTPS=1` when TLS is terminated by a trusted proxy.
+Run `./install.sh --setup-admin` to create an administrator for a new managed workspace. Choose a temporary password of at least 12 characters. The first sign-in requires setting a different password. Serve managed workspaces over HTTPS for network access and set `LABBOOK_HTTPS=1` when a trusted loopback proxy terminates TLS and overwrites the `X-Forwarded-Proto` header with the actual request scheme.
 
 After changing the temporary password, the first administrator sees **Account settings** and must choose a shared team key or personal credentials before anyone can use **My agent**. Use the same settings to add members and change their roles. A member who uses personal credentials gets a setup reminder until a key is configured. The workspace policy supports OpenAI and Claude API keys. Claude chat currently supports text responses without web search, attachments or structured workspace proposals. Claude uses a [Claude Console API key](https://platform.claude.com/docs/en/manage-claude/authentication) in both credential modes. Anthropic reserves Claude subscription sign-in for its own apps and supported flows. See [Anthropic’s authentication guidance](https://code.claude.com/docs/en/legal-and-compliance).
 

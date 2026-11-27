@@ -10,8 +10,8 @@ function createAccountGate(runtime) {
   const renewals=new Map();
   const catalog=new Map();
   const login=require('./chatgpt-login.cjs');
-  const localBrowser=req=>['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress)
-    && /^127\.0\.0\.1:\d+$/.test(req.headers.host||'');
+  const loopback=req=>['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  const localBrowser=req=>loopback(req) && /^127\.0\.0\.1:\d+$/.test(req.headers.host||'');
   function canConnect(req){return localBrowser(req)&&(req.headers.host||'').endsWith(':'+req.socket.localPort)}
   async function planToken(userId,connection){
     if(connection.expires-Date.now()>60_000)return connection.accessToken;
@@ -33,7 +33,7 @@ function createAccountGate(runtime) {
   const cookieName = 'labbook_session_' + runtime.environment;
 
   function secureTransport(req) {
-    return req.socket.encrypted || process.env.LABBOOK_HTTPS === '1';
+    return req.socket.encrypted || (process.env.LABBOOK_HTTPS === '1' && loopback(req) && req.headers['x-forwarded-proto'] === 'https');
   }
 
   function setCookie(req, res, token, age) {
