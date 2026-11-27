@@ -23,8 +23,19 @@
   return {backdrop,close,status:message=>{backdrop.querySelector('[role=status]').textContent=message}};
  }
 
+ let opening=false,reminder;
+ function updateReminder(configuration){
+  reminder.hidden=configuration.configured&&!configuration.setupRequired;
+  reminder.textContent=configuration.setupRequired?'Set up workspace AI':configuration.mode==='personal'?'Connect your AI account or add a key':'Team AI key not configured';
+ }
  async function settings(){
+  if(opening||document.querySelector('[data-managed-account-settings]'))return;
+  opening=true;
+  try{await showSettings()}finally{opening=false}
+ }
+ async function showSettings(){
   const configuration=await api('ai');
+  updateReminder(configuration);
   const content=document.createElement('div');
   const identity=document.createElement('p');identity.textContent=account.username+' · '+account.role;
   content.append(identity);
@@ -75,11 +86,12 @@
   }
   const logout=document.createElement('button');logout.type='button';logout.className='btn ghost';logout.textContent='Sign out';content.append(logout);
   const panel=dialog('Account settings',content);
-  panel.status(configuration.configured?'AI credential configured.':'No AI credential configured for this account.');
+  panel.backdrop.dataset.managedAccountSettings='';
+  panel.status(configuration.setupRequired?'Choose how this workspace will use AI before sending chat requests.':configuration.configured?'AI credential configured.':'No AI credential configured for this account.');
   logout.onclick=async()=>{try{if(!flushDraft())return;await api('logout',{});location.reload()}catch(error){panel.status(error.message)}};
   form.onsubmit=async event=>{
    event.preventDefault();
-   try{await api('ai',Object.fromEntries(new FormData(form)));form.elements.key.value='';panel.close();await settings()}
+   try{const payload=Object.fromEntries(new FormData(form));await api('ai',payload);form.elements.key.value='';panel.close();await showSettings()}
    catch(error){panel.status(error.message)}
   };
  }
@@ -133,14 +145,14 @@
   document.querySelector('.sidebar-bottom').prepend(open);
   new MutationObserver(renderSharing).observe(document.querySelector('#content'),{childList:true,subtree:true});
   renderSharing();
+  reminder=document.createElement('button');reminder.type='button';reminder.className='text-btn';
+  reminder.hidden=true;
+  reminder.onclick=()=>settings().catch(error=>toast(error.message));
+  open.after(reminder);
   try{
    const configuration=await api('ai');
-   if(!configuration.configured){
-    const reminder=document.createElement('button');reminder.type='button';reminder.className='text-btn';
-    reminder.textContent=configuration.mode==='personal'?'Configure your AI key':'Team AI key not configured';
-    reminder.onclick=()=>settings().catch(error=>toast(error.message));
-    open.after(reminder);
-   }
+   updateReminder(configuration);
+   if(configuration.setupRequired)await settings();
   }catch{}
  })();
 })();

@@ -33,8 +33,6 @@ app.whenReady().then(async()=>{
     }
     throw Error('Account interface did not appear');
    };
-   const settings=await wait(()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Account settings'));
-   settings.click();
    const ai=await wait(()=>document.querySelector('form:has(select[name=mode])'));
    ai.elements.mode.value='personal';ai.requestSubmit();
    const connect=await wait(()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Continue with ChatGPT'));

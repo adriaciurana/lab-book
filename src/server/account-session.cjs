@@ -238,7 +238,7 @@ function createAccountGate(runtime) {
       return runtime.json(res,200,{provider,models});
     }
     if(pathname==='/api/account/ai'&&req.method==='GET'){
-      return runtime.json(res,200,{mode:team.mode,provider:credential.provider,configured:Boolean(credential.provider==='chatgpt'?user.chatgpt:credential.key||(req.labbookAI.allowServerKey&&process.env.OPENAI_API_KEY)),...(personal&&{chatgptAvailable:canConnect(req),chatgptEmail:user.chatgpt?.email||''})});
+      return runtime.json(res,200,{setupRequired:!registry.ai&&user.role==='admin',mode:team.mode,provider:credential.provider,configured:Boolean(credential.provider==='chatgpt'?user.chatgpt:credential.key||(req.labbookAI.allowServerKey&&process.env.OPENAI_API_KEY)),...(personal&&{chatgptAvailable:canConnect(req),chatgptEmail:user.chatgpt?.email||''})});
     }
     if(pathname==='/api/account/share'&&req.method==='GET'){
       const noteId=new URL(req.url,'http://localhost').searchParams.get('noteId');
@@ -275,6 +275,7 @@ function createAccountGate(runtime) {
         }
       }
     if(pathname==='/api/search'&&req.method==='POST'){
+      if(!registry.ai)return runtime.json(res,428,{error:'The administrator must choose an AI credential policy in Account settings.'});
       const {view}=readWorkspace();
       req.labbookAgentWorkspace={...view,...(user.role!=='admin'&&{context:[]})};
       req.labbookMember=user.role!=='admin';

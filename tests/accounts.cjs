@@ -71,6 +71,15 @@ test('separate administrator and member sessions enforce read, edit and AI polic
     return cookie;
   }
   const admin=await login('admin','initial admin password','permanent admin password');
+  const pending=await(await call('/api/account/ai',{cookie:admin})).json();
+  assert.equal(pending.setupRequired,true);
+  assert.equal((await call('/api/search',{cookie:admin,body:{query:'test'}})).status,428);
+  assert.equal((await call('/api/account/ai',{cookie:admin,body:{mode:'team',provider:'openai',key:'team-fixture-secret'}})).status,200);
+  const team=await(await call('/api/account/ai',{cookie:admin})).json();
+  assert.equal(team.setupRequired,false);
+  assert.equal(team.mode,'team');
+  assert.equal(team.configured,true);
+  assert.equal(Object.hasOwn(team,'key'),false);
   const added=await call('/api/account/members',{cookie:admin,body:{username:'reader',password:'initial member password'}});
   assert.equal(added.status,201);const {id}=await added.json();
   const member=await login('reader','initial member password','permanent member password');
